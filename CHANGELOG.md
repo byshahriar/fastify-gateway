@@ -40,6 +40,8 @@ and this project adheres to
 - Multi-stage Docker image and a Compose topology with demo upstreams
 - GitHub Actions automation: CI (with a Docker build smoke test), CodeQL
   scanning, dependency review, Dependabot, and a tag-driven GHCR release
+- Husky pre-commit hook running lint-staged (ESLint + Prettier) on staged
+  TypeScript
 - Test suite: unit, integration (real HTTP upstream stubs), and a live
   end-to-end suite that exercises the compiled build
 - Documentation set under `docs/` (getting started, architecture,

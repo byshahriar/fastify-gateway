@@ -16,6 +16,12 @@ npm run start:dev
 Requires Node.js >= 20.11. All scripts are listed in
 [Getting Started](docs/getting-started.md#all-scripts).
 
+`npm install` sets up a Husky pre-commit hook (via the `prepare` script) that
+runs `lint-staged` — ESLint with auto-fix and Prettier — over your staged
+TypeScript files. Formatting is fixed automatically; a lint error that cannot
+be auto-fixed blocks the commit. This keeps the same rules CI enforces from
+ever reaching a pull request.
+
 ## Workflow
 
 1. Fork and create a topic branch from `main`.
