@@ -1,9 +1,18 @@
 # fastify-gateway
 
+![CI](https://img.shields.io/badge/CI-passing-brightgreen)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20.11-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+
 A lightweight, extensible API gateway built on [Fastify](https://fastify.dev).
 It authenticates requests at the edge, proxies them to upstream services with
 fail-fast timeouts and connection pooling, and propagates distributed-tracing
 context on every hop — all in a single small deployable.
+
+> **Note:** the CI/coverage badges above are static placeholders. Once the
+> repository is hosted, point them at your provider (e.g. a GitHub Actions
+> workflow badge and a coverage service).
 
 ## Why this gateway
 
@@ -44,14 +53,20 @@ See [Getting Started](docs/getting-started.md) for the full walkthrough.
 
 ## Documentation
 
+Full index: [docs/](docs/README.md).
+
 | Guide | Contents |
 | --- | --- |
 | [Getting Started](docs/getting-started.md) | Install, configure, run, verify |
 | [Architecture](docs/architecture.md) | Project layout, request lifecycle, design decisions |
 | [Configuration](docs/configuration.md) | Every environment variable, defaults, validation |
+| [Endpoints](docs/endpoints.md) | Routes the gateway serves and how it proxies |
 | [Authentication](docs/authentication.md) | Edge schemes, upstream credentials, custom strategies |
-| [Observability](docs/observability.md) | Request ids, trace propagation, logging |
+| [Observability](docs/observability.md) | Request ids, trace propagation, logging, metrics |
+| [Security Model](docs/security-model.md) | Trust boundaries and responsibilities |
 | [Operations](docs/operations.md) | Error semantics, timeouts, rate limiting, scaling |
+| [Deployment](docs/deployment.md) | Docker, Compose, and Kubernetes |
+| [Troubleshooting](docs/troubleshooting.md) | Common problems and their causes |
 | [Extending](docs/extending.md) | Adding services, override points, new auth schemes |
 | [Testing](docs/testing.md) | Test layers, running, writing tests |
 

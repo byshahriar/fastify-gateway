@@ -38,14 +38,15 @@ src/
 ├── app.ts                     composition root — registration order lives here
 ├── server.ts                  entry point — listen + graceful shutdown
 ├── config/
-│   └── schema.ts              env schema, validated by @fastify/env at boot
+│   ├── schema.ts              env schema, validated by @fastify/env at boot
+│   └── env.ts                 fail-fast readers for pre-schema factory options
 ├── constants/                 header names, status codes, error messages
 ├── enums/                     enum-like const objects (AuthScheme)
 ├── interfaces/                object shapes (ErrorBody, TraceContext, …)
 ├── types/                     type aliases + ambient Fastify augmentation
 │   ├── gateway-config.type.ts GatewayConfig, derived from the env schema
 │   └── fastify.d.ts           typings for runtime decorators
-├── utils/                     pure helpers (crypto, basic-auth, tracing, replies)
+├── utils/                     pure helpers (crypto, basic-auth, tracing, urls, replies)
 ├── strategies/                edge auth strategies — one factory per scheme
 ├── core/
 │   └── service-gateway.ts     abstract ServiceGateway + toPlugin() bridge

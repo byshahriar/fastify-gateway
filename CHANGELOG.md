@@ -40,5 +40,7 @@ and this project adheres to
 - Multi-stage Docker image and a Compose topology with demo upstreams
 - Test suite: unit, integration (real HTTP upstream stubs), and a live
   end-to-end suite that exercises the compiled build
-- Documentation set under `docs/`, CI on Node.js 20, 22, and 24 with
-  enforced coverage thresholds
+- Documentation set under `docs/` (getting started, architecture,
+  configuration, endpoints, authentication, observability, security model,
+  operations, deployment, troubleshooting, extending, testing), CI on
+  Node.js 20, 22, and 24 with enforced coverage thresholds
