@@ -28,6 +28,10 @@ export function createBasicAuthStrategy(users: Map<string, string>): AuthStrateg
 
     const credentials = parseBasicAuthHeader(req.headers[Header.Authorization]);
     const expected = credentials ? users.get(credentials.username) : undefined;
+    // Operand order is security-critical: always run safeEqual (against a
+    // dummy when the user is unknown) and only then check that the user
+    // existed, so timing does not reveal whether a username is valid. Do not
+    // reorder to short-circuit on `expected !== undefined`.
     const authorized =
       credentials !== null &&
       safeEqual(credentials.password, expected ?? DUMMY_PASSWORD) &&
