@@ -1,0 +1,45 @@
+# Local SonarQube server for on-demand code analysis. Opt-in and separate from
+# the application's compose.yaml.
+#
+#   docker compose -f sonar-compose.yaml up -d       # start (http://localhost:9000)
+#   # ... create a project + token in the UI, then scan (see docs/testing.md) ...
+#   docker compose -f sonar-compose.yaml down        # stop
+#   docker compose -f sonar-compose.yaml down -v      # stop and wipe data
+#
+# SonarQube's embedded Elasticsearch needs a raised map count on the host:
+#   Linux:  sudo sysctl -w vm.max_map_count=262144
+#   macOS/Windows: configured inside the Docker VM (usually sufficient by default)
+name: fastify-gateway-sonar
+
+services:
+  sonarqube:
+    image: sonarqube:community
+    depends_on:
+      - db
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  postgresql_data:

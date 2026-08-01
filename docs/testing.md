@@ -31,7 +31,49 @@ npm run test:e2e       # build, then the live end-to-end suite
 ```
 
 CI runs lint, typecheck, the full test suite, and the end-to-end suite on
-Node.js 20 and 22 for every push and pull request.
+Node.js 20, 22, and 24 for every push and pull request.
+
+`npm run test:cov` also writes `coverage/lcov.info`, consumed by SonarQube.
+
+## Static analysis with SonarQube
+
+SonarQube runs in CI (see [Contributing](../CONTRIBUTING.md#continuous-integration)).
+To analyze locally instead — no account, no Java or scanner install required —
+run a SonarQube server with the bundled compose file and scan with the
+containerized scanner.
+
+1. Start the server (first boot takes a minute):
+
+   ```bash
+   docker compose -f sonar-compose.yaml up -d
+   ```
+
+2. Open <http://localhost:9000> (default login `admin` / `admin`), create a
+   local project, and generate a token.
+
+3. Produce coverage, then scan:
+
+   ```bash
+   npm run test:cov
+   docker run --rm \
+     --network fastify-gateway-sonar_default \
+     -v "$PWD:/usr/src" \
+     -e SONAR_HOST_URL=http://sonarqube:9000 \
+     -e SONAR_TOKEN=<your-token> \
+     sonarsource/sonar-scanner-cli
+   ```
+
+   The scanner reads `sonar-project.properties` and `coverage/lcov.info` from
+   the mounted working directory.
+
+4. Review results in the web UI, then stop the server:
+
+   ```bash
+   docker compose -f sonar-compose.yaml down      # keep data
+   docker compose -f sonar-compose.yaml down -v   # wipe data
+   ```
+
+This is entirely optional — CI covers SonarQube for pull requests.
 
 ## What is covered
 
