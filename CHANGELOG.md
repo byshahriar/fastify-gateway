@@ -8,6 +8,14 @@ and this project adheres to
 
 ## [1.0.0] - 2026-08-13
 
+### Security
+
+- Validate factory options read from raw env (`BODY_LIMIT`,
+  `KEEP_ALIVE_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS`, `SHUTDOWN_TIMEOUT_MS`,
+  `TRUST_PROXY`) so a malformed value fails fast instead of silently
+  disabling a control
+- Strip credentials embedded in a service URL from the boot log
+
 ### Added
 
 - Proxy core: per-service gateway classes with prefix rewriting, streamed

@@ -9,3 +9,4 @@ export {
   nextTraceContext,
   parseTraceparent,
 } from "@/utils/tracing.util";
+export { redactUrlCredentials } from "@/utils/url.util";

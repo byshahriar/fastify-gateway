@@ -14,8 +14,12 @@ variable to the schema updates the type everywhere.
 
 A few values are read from the raw environment instead, because they
 configure the Fastify factory or the process before the schema plugin runs:
-`LOG_LEVEL`, `BODY_LIMIT`, `TRUST_PROXY`, `KEEP_ALIVE_TIMEOUT_MS`, and
-`SHUTDOWN_TIMEOUT_MS`. They are marked as factory/process options below.
+`LOG_LEVEL`, `BODY_LIMIT`, `TRUST_PROXY`, `KEEP_ALIVE_TIMEOUT_MS`,
+`REQUEST_TIMEOUT_MS`, and `SHUTDOWN_TIMEOUT_MS`. They are marked as
+factory/process options below. These are validated the same way — a
+non-numeric timeout or a non-boolean `TRUST_PROXY` fails at boot rather than
+silently coercing to a degraded value (for example `NaN` disabling a
+timeout).
 
 ## Reference
 

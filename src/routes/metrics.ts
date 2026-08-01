@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
-import { Header, HttpStatus } from "@/constants";
-import { safeEqual } from "@/utils";
+import { ErrorMessage, Header, HttpStatus } from "@/constants";
+import { errorBody, safeEqual } from "@/utils";
 
 // Exempts the route from rate limiting so scrapes never consume a budget.
 const noRateLimit = { config: { rateLimit: false } };
@@ -29,7 +29,7 @@ const metrics: FastifyPluginAsync = async (fastify) => {
       if (!match || !safeEqual(match[1], token)) {
         return reply
           .code(HttpStatus.Unauthorized)
-          .send({ error: "Unauthorized", requestId: req.id });
+          .send(errorBody(req.id, ErrorMessage.Unauthorized));
       }
     }
 

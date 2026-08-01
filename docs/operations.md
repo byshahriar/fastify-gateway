@@ -167,7 +167,9 @@ Explicitly out of scope today:
 - Constant-time credential comparison (inputs hashed first, so timing
   reveals nothing — not even credential length)
 - Boot-time rejection of dangerous configuration (wildcard CORS with
-  credentials, malformed or duplicate users, non-URL upstreams)
+  credentials, malformed or duplicate users, non-URL upstreams, and
+  malformed factory options that would otherwise silently disable a control)
+- Upstream credentials embedded in a service URL are stripped from logs
 - Bounded request timeout against slow-client attacks; optional escalating
   ban (`RATE_LIMIT_BAN`) on repeat offenders
 - Optional bearer-token protection for `/metrics`

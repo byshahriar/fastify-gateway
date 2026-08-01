@@ -3,7 +3,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { Header } from "@/constants";
 import { AuthScheme } from "@/enums";
 import type { GatewayConfig } from "@/types";
-import { encodeBasicAuth } from "@/utils";
+import { encodeBasicAuth, redactUrlCredentials } from "@/utils";
 
 type ReplyOptions = NonNullable<FastifyHttpProxyOptions["replyOptions"]>;
 type HeaderRewriter = NonNullable<ReplyOptions["rewriteRequestHeaders"]>;
@@ -177,7 +177,12 @@ export abstract class ServiceGateway {
       });
 
       fastify.log.info(
-        { service: this.name, prefix: this.prefix, upstream: target, auth: this.auth },
+        {
+          service: this.name,
+          prefix: this.prefix,
+          upstream: redactUrlCredentials(target),
+          auth: this.auth,
+        },
         "service route registered",
       );
     };

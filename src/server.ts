@@ -1,8 +1,11 @@
 import { buildApp } from "@/app";
+import { envNumber } from "@/config/env";
 
 // Grace period for draining in-flight requests before a forced exit, so a
-// hung upstream connection can never stall shutdown indefinitely.
-const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS ?? 10_000);
+// hung upstream connection can never stall shutdown indefinitely. Validated
+// to fail fast; a bad value would otherwise coerce to 0 and turn graceful
+// shutdown into an immediate hard exit.
+const SHUTDOWN_TIMEOUT_MS = envNumber("SHUTDOWN_TIMEOUT_MS", 10_000, 1);
 
 const app = await buildApp();
 await app.ready();

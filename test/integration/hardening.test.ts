@@ -39,6 +39,18 @@ describe("configuration guards", () => {
     expect(res.statusCode).toBe(200);
     await app.close();
   });
+
+  it("refuses to start on a non-numeric factory option instead of disabling it", async () => {
+    // A bad REQUEST_TIMEOUT_MS would otherwise coerce to NaN and Fastify would
+    // silently accept it as 0, disabling the slow-client timeout.
+    await expect(buildTestApp({ REQUEST_TIMEOUT_MS: "abc" })).rejects.toThrow(
+      /REQUEST_TIMEOUT_MS/,
+    );
+  });
+
+  it("refuses to start on an invalid TRUST_PROXY value", async () => {
+    await expect(buildTestApp({ TRUST_PROXY: "yes" })).rejects.toThrow(/TRUST_PROXY/);
+  });
 });
 
 describe("correlation id hardening", () => {

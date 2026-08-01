@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import env from "@fastify/env";
 import { randomUUID } from "node:crypto";
 import { configSchema } from "@/config/schema";
+import { envBoolean, envNumber } from "@/config/env";
 import { Header, SAFE_HEADER_ID_PATTERN } from "@/constants";
 import securityPlugin from "@/plugins/security";
 import requestContextPlugin from "@/plugins/request-context";
@@ -32,7 +33,7 @@ export async function buildApp() {
   // Resolves req.ip from x-forwarded-for. Correct behind a trusted load
   // balancer; set TRUST_PROXY=false when clients connect directly, or
   // rate-limit keys and forwarded headers become spoofable.
-  const trustProxy = process.env.TRUST_PROXY !== "false";
+  const trustProxy = envBoolean("TRUST_PROXY", true);
 
   const app = Fastify({
     logger: {
@@ -44,8 +45,9 @@ export async function buildApp() {
         `req.headers.${Header.Cookie}`,
       ],
     },
-    // Factory option, same reason.
-    bodyLimit: Number(process.env.BODY_LIMIT ?? 1_048_576),
+    // Factory option, same reason. Validated to fail fast (bodyLimit must be
+    // a positive integer).
+    bodyLimit: envNumber("BODY_LIMIT", 1_048_576, 1),
     genReqId: (req) => {
       const incoming = req.headers[Header.RequestId];
       return typeof incoming === "string" && SAFE_HEADER_ID_PATTERN.test(incoming)
@@ -54,11 +56,11 @@ export async function buildApp() {
     },
     // Must exceed the idle timeout of the load balancer in front of the
     // gateway so the balancer never reuses a connection the gateway closed.
-    keepAliveTimeout: Number(process.env.KEEP_ALIVE_TIMEOUT_MS ?? 72_000),
+    keepAliveTimeout: envNumber("KEEP_ALIVE_TIMEOUT_MS", 72_000),
     // Bound the time a single request may take to arrive, so a slow client
     // cannot hold a connection open indefinitely (tighter than Node's ~5min
     // default). 0 disables it.
-    requestTimeout: Number(process.env.REQUEST_TIMEOUT_MS ?? 30_000),
+    requestTimeout: envNumber("REQUEST_TIMEOUT_MS", 30_000),
     trustProxy,
   });
 
