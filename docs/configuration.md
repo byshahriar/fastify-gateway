@@ -70,6 +70,7 @@ allowing traffic — see [Authentication](authentication.md).
 | `RATE_LIMIT_MAX` | `100` | Requests allowed per window per client IP |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Window length in milliseconds |
 | `RATE_LIMIT_BAN` | `0` | Ban a client IP after this many consecutive over-limit responses; `0` disables |
+| `REDIS_URL` | — | Redis connection string for a shared rate-limit store across replicas; empty uses the in-memory store |
 
 ### Upstream connections
 

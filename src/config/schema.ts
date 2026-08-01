@@ -31,6 +31,10 @@ export const configSchema = {
     // temporarily banned (escalating brute-force friction). 0 disables.
     RATE_LIMIT_BAN: { type: "number", default: 0 },
 
+    // Redis connection string for a shared rate-limit store across replicas.
+    // Empty uses the in-memory store (correct for a single instance).
+    REDIS_URL: { type: "string", default: "" },
+
     // Bearer token required to scrape GET /metrics. Empty leaves the endpoint
     // open — protect it with network policy in that case.
     METRICS_TOKEN: { type: "string", default: "" },

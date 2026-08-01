@@ -30,7 +30,8 @@ and this project adheres to
   responses
 - Uniform error semantics: upstream failures mapped to `502`/`504`, internal
   details never exposed, every error body carrying the request id
-- Per-IP rate limiting with health-probe exemption, CORS allow-list, helmet
+- Per-IP rate limiting with health-probe exemption and an optional Redis
+  store (`REDIS_URL`) shared across replicas, CORS allow-list, helmet
   security headers, credential redaction in logs
 - Schema-validated configuration with fail-fast boot and a schema-derived
   config type
@@ -44,6 +45,7 @@ and this project adheres to
   TypeScript
 - SonarQube scanner configuration and CI workflow; LCOV coverage output, plus
   an optional local SonarQube server via docker compose
+- Makefile and scripts/tasks.sh task runners wrapping the common commands
 - Test suite: unit, integration (real HTTP upstream stubs), and a live
   end-to-end suite that exercises the compiled build
 - Documentation set under `docs/` (getting started, architecture,

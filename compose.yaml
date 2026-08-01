@@ -12,10 +12,17 @@ services:
       USERS_SERVICE_URL: http://users:5678
       ORDERS_SERVICE_URL: http://orders:5678
       PUBLIC_SERVICE_URL: http://public:5678
+      # Shared rate-limit store, so the limit holds if the gateway is scaled.
+      REDIS_URL: redis://redis:6379
     depends_on:
       - users
       - orders
       - public
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
     restart: unless-stopped
 
   # Demo upstreams — replace these with your real services and point the

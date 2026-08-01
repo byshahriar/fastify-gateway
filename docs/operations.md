@@ -65,8 +65,10 @@ Per-client-IP, in-memory: `RATE_LIMIT_MAX` requests per
 never exhaust a budget.
 
 The in-memory store is correct for a single instance. When running replicas,
-pass the `redis` option to `@fastify/rate-limit` in `src/plugins/rate-limit.ts`
-— nothing else changes, the gateway is otherwise stateless.
+set `REDIS_URL` to a shared Redis so the limit applies across all of them —
+nothing else changes, the gateway is otherwise stateless. On a Redis store
+error the limiter fails open, so a Redis outage never takes the gateway
+down.
 
 ## Deployment topology
 

@@ -97,8 +97,8 @@ Key points:
 - **Trust** — behind an ingress or service mesh, keep `TRUST_PROXY=true`.
   Ensure the ingress sets `x-forwarded-for` correctly.
 - **Rate limiting across replicas** — the in-memory limiter is per-pod. With
-  `replicas: 3`, effective limits are 3× per client until you switch to the
-  Redis store in `src/plugins/rate-limit.ts`.
+  `replicas: 3`, effective limits are 3× per client until you set `REDIS_URL`
+  to a shared Redis, which applies one limit across all pods.
 - **Metrics scraping** — expose `/metrics` to Prometheus with a
   `METRICS_TOKEN`; keep it off any public ingress route.
 
