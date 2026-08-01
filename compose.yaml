@@ -1,0 +1,36 @@
+services:
+  gateway:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      GATEWAY_API_KEY: ${GATEWAY_API_KEY:-change-me}
+      BASIC_AUTH_USERS: ${BASIC_AUTH_USERS:-admin:change-me}
+      # Clients hit the published port directly in this topology — there is
+      # no trusted load balancer in front, so x-forwarded-for is not trusted.
+      TRUST_PROXY: "false"
+      USERS_SERVICE_URL: http://users:5678
+      ORDERS_SERVICE_URL: http://orders:5678
+      PUBLIC_SERVICE_URL: http://public:5678
+    depends_on:
+      - users
+      - orders
+      - public
+    restart: unless-stopped
+
+  # Demo upstreams — replace these with your real services and point the
+  # *_SERVICE_URL variables above at them.
+  users:
+    image: hashicorp/http-echo:1.0
+    command: ["-text", '{"service":"users"}']
+    restart: unless-stopped
+
+  orders:
+    image: hashicorp/http-echo:1.0
+    command: ["-text", '{"service":"orders"}']
+    restart: unless-stopped
+
+  public:
+    image: hashicorp/http-echo:1.0
+    command: ["-text", '{"service":"public"}']
+    restart: unless-stopped
