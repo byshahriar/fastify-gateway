@@ -49,7 +49,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: your-registry/fastify-gateway:1.0.0
+          image: ghcr.io/OWNER/fastify-gateway:1.0.0
           ports:
             - containerPort: 8080
           env:
@@ -101,6 +101,25 @@ Key points:
   Redis store in `src/plugins/rate-limit.ts`.
 - **Metrics scraping** — expose `/metrics` to Prometheus with a
   `METRICS_TOKEN`; keep it off any public ingress route.
+
+## Releases
+
+Pushing a `v*` tag runs the release workflow, which re-verifies the build and
+publishes a multi-tag image to the GitHub Container Registry:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+# -> ghcr.io/OWNER/fastify-gateway:1.0.0, :1.0, :latest
+```
+
+Pull it directly:
+
+```bash
+docker pull ghcr.io/OWNER/fastify-gateway:1.0.0
+```
+
+Replace `OWNER` with your GitHub org or user.
 
 ## Configuration in containers
 

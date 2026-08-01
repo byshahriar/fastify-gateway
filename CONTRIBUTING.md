@@ -26,8 +26,23 @@ Requires Node.js >= 20.11. All scripts are listed in
    npm run lint:check && npm run typecheck && npm test
    ```
 
-4. Open a pull request. CI runs lint, typecheck, the test suite, and the
-   end-to-end suite on Node.js 20 and 22; all must pass.
+4. Open a pull request. CI runs the full quality gate on Node.js 20, 22, and
+   24 (see below); all checks must pass.
+
+## Continuous integration
+
+Every push and pull request runs GitHub Actions:
+
+- **CI** — format, lint, typecheck, coverage, and the e2e suite on Node.js
+  20, 22, and 24, plus a Docker image build and smoke test.
+- **CodeQL** — static security analysis.
+- **Dependency Review** — pull requests introducing high-severity vulnerable
+  dependencies are blocked.
+
+Dependabot opens weekly update PRs for npm, GitHub Actions, and the Docker
+base image. Tagging `v*` publishes a container image to GHCR.
+
+All checks must pass before a pull request is merged.
 
 ## What makes a good pull request
 
