@@ -1,0 +1,60 @@
+{
+  "name": "fastify-gateway",
+  "version": "1.0.0",
+  "description": "Lightweight, extensible API gateway built on Fastify — plugin architecture, per-service proxy classes, distributed tracing support",
+  "type": "module",
+  "main": "dist/server.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "keywords": [
+    "fastify",
+    "api-gateway",
+    "gateway",
+    "proxy",
+    "reverse-proxy",
+    "microservices",
+    "distributed-tracing"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "tsx src/server.ts",
+    "start:dev": "tsx watch src/server.ts",
+    "start:debug": "tsx watch --inspect src/server.ts",
+    "start:prod": "node dist/server.js",
+    "dev": "npm run start:dev",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "lint:check": "eslint \"{src,test}/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "test:debug": "vitest --inspect-brk --no-file-parallelism",
+    "test:e2e": "npm run build && node scripts/e2e.mjs"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@fastify/env": "^7.0.0",
+    "@fastify/helmet": "^13.1.0",
+    "@fastify/http-proxy": "^11.6.0",
+    "@fastify/rate-limit": "^11.2.0",
+    "fastify": "^5.11.3",
+    "fastify-plugin": "^6.0.0",
+    "prom-client": "^15.1.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.2.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.8.1",
+    "prettier": "^3.9.6",
+    "tsc-alias": "^1.9.1",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0",
+    "vitest": "^4.1.10"
+  }
+}
