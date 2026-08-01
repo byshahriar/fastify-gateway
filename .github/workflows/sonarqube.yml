@@ -1,0 +1,35 @@
+name: SonarQube
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  analysis:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    # Skip on forks: SONAR_TOKEN is not available to fork pull requests.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so SonarQube can attribute issues to their commits.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Produces coverage/lcov.info consumed via sonar-project.properties.
+      - run: npm run test:cov
+      - name: SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # For a self-hosted SonarQube server, also set SONAR_HOST_URL.
+          # SonarCloud users can omit it (defaults to https://sonarcloud.io).
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

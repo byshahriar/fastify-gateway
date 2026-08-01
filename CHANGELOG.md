@@ -42,6 +42,7 @@ and this project adheres to
   scanning, dependency review, Dependabot, and a tag-driven GHCR release
 - Husky pre-commit hook running lint-staged (ESLint + Prettier) on staged
   TypeScript
+- SonarQube scanner configuration and CI workflow; LCOV coverage output
 - Test suite: unit, integration (real HTTP upstream stubs), and a live
   end-to-end suite that exercises the compiled build
 - Documentation set under `docs/` (getting started, architecture,

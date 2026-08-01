@@ -44,6 +44,9 @@ Every push and pull request runs GitHub Actions:
 - **CodeQL** — static security analysis.
 - **Dependency Review** — pull requests introducing high-severity vulnerable
   dependencies are blocked.
+- **SonarQube** — static analysis and coverage (from `npm run test:cov`,
+  which writes `coverage/lcov.info`). Requires a `SONAR_TOKEN` secret; see
+  `sonar-project.properties`.
 
 Dependabot opens weekly update PRs for npm, GitHub Actions, and the Docker
 base image. Tagging `v*` publishes a container image to GHCR.
