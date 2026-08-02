@@ -92,6 +92,11 @@ Every response carries `x-request-id` and `x-correlation-id` headers — see
 | `npm run test:debug` | Tests with the inspector attached |
 | `npm run test:e2e` | Build, then live end-to-end verification |
 
+A `Makefile` and `scripts/tasks.sh` wrap these for convenience — run
+`make help` (or `./scripts/tasks.sh` with no argument) to list the targets,
+e.g. `make check` for the full local gate or `make up` for the Compose
+stack.
+
 ## Next steps
 
 - Point the gateway at your own services: [Extending](extending.md)
