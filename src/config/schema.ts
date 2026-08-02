@@ -24,6 +24,14 @@ export const configSchema = {
     // Comma-separated `username:password` pairs for the `basic` auth scheme.
     BASIC_AUTH_USERS: { type: "string", default: "" },
 
+    // JWT (`jwt` auth scheme) verification. Provide either a shared HMAC
+    // secret or a remote JWKS URI; issuer and audience are optional claims
+    // to enforce.
+    JWT_SECRET: { type: "string", default: "" },
+    JWT_JWKS_URI: { type: "string", default: "" },
+    JWT_ISSUER: { type: "string", default: "" },
+    JWT_AUDIENCE: { type: "string", default: "" },
+
     RATE_LIMIT_MAX: { type: "number", default: 100 },
     RATE_LIMIT_WINDOW_MS: { type: "number", default: 60000 },
 

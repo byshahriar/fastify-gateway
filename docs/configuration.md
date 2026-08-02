@@ -49,6 +49,10 @@ timeout).
 | --- | --- | --- |
 | `GATEWAY_API_KEY` | — | Shared secret for services using the `api-key` scheme |
 | `BASIC_AUTH_USERS` | — | Comma-separated `username:password` pairs for the `basic` scheme |
+| `JWT_SECRET` | — | Shared HMAC secret (HS256) for the `jwt` scheme |
+| `JWT_JWKS_URI` | — | Remote JWKS endpoint (RS256/ES256) for the `jwt` scheme |
+| `JWT_ISSUER` | — | Required `iss` claim for the `jwt` scheme, if set |
+| `JWT_AUDIENCE` | — | Required `aud` claim for the `jwt` scheme, if set |
 
 `BASIC_AUTH_USERS` entries are parsed at boot; a malformed entry (missing
 colon, empty username or password) or a duplicate username prevents

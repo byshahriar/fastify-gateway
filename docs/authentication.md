@@ -32,7 +32,12 @@ Each service declares one scheme:
 | --- | --- | --- |
 | `api-key` | Shared secret (`GATEWAY_API_KEY`) | `x-api-key` |
 | `basic` | User list (`BASIC_AUTH_USERS`) | `Authorization: Basic …` |
+| `jwt` | HMAC secret or JWKS (`JWT_SECRET` / `JWT_JWKS_URI`) | `Authorization: Bearer …` |
 | `none` | — | — |
+
+The `jwt` scheme verifies a signed token's signature and expiry, plus any
+configured issuer (`JWT_ISSUER`) and audience (`JWT_AUDIENCE`) claims, using
+either a shared HMAC secret (HS256) or a remote JWKS endpoint (RS256/ES256).
 
 All credential comparisons are constant-time (`crypto.timingSafeEqual`).
 Unknown-username lookups in Basic auth are equalized against a dummy secret,
@@ -76,18 +81,20 @@ A custom scheme that reads `Authorization` should override
 
 ## Custom schemes
 
-Schemes are pluggable. Each is a factory in `src/strategies/` producing an
-`AuthStrategy` (a Fastify preHandler), registered in the strategy registry:
+The built-in schemes (`api-key`, `basic`, `jwt`) are themselves factories in
+`src/strategies/`; new ones follow the same shape. A strategy is a factory
+producing an `AuthStrategy` (a Fastify preHandler), registered in the strategy
+registry. For example, an opaque-token introspection scheme:
 
 ```ts
-// src/strategies/jwt.strategy.ts
+// src/strategies/opaque-token.strategy.ts
 import type { AuthStrategy } from "@/types";
-import { sendUnauthorized } from "@/utils";
+import { parseBearerToken, sendUnauthorized } from "@/utils";
 
-export function createJwtStrategy(verify: (token: string) => boolean): AuthStrategy {
+export function createOpaqueTokenStrategy(introspect: (token: string) => Promise<boolean>): AuthStrategy {
   return async (req, reply) => {
-    const token = req.headers.authorization?.replace(/^Bearer /, "");
-    if (!token || !verify(token)) return sendUnauthorized(req, reply);
+    const token = parseBearerToken(req.headers.authorization);
+    if (!token || !(await introspect(token))) return sendUnauthorized(req, reply);
   };
 }
 ```
@@ -95,7 +102,7 @@ export function createJwtStrategy(verify: (token: string) => boolean): AuthStrat
 Register it (in `plugins/auth.ts`, or any plugin registered after it):
 
 ```ts
-fastify.registerAuthStrategy(AuthScheme.Jwt, createJwtStrategy(verify));
+fastify.registerAuthStrategy(AuthScheme.Opaque, createOpaqueTokenStrategy(introspect));
 ```
 
 Add the scheme value to `src/enums/auth-scheme.enum.ts`, and reference it from

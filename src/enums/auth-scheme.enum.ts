@@ -9,6 +9,7 @@ export const AuthScheme = {
   None: "none",
   ApiKey: "api-key",
   Basic: "basic",
+  Jwt: "jwt",
 } as const;
 
 /**

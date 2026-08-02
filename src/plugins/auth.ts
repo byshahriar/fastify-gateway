@@ -1,6 +1,6 @@
 import fp from "fastify-plugin";
 import { AuthScheme } from "@/enums";
-import { createApiKeyStrategy, createBasicAuthStrategy } from "@/strategies";
+import { createApiKeyStrategy, createBasicAuthStrategy, createJwtStrategy } from "@/strategies";
 import type { AuthStrategy } from "@/types";
 import { parseUserList } from "@/utils";
 
@@ -32,6 +32,15 @@ export default fp(
       AuthScheme.Basic,
       // Parsed at boot so malformed configuration prevents startup.
       createBasicAuthStrategy(parseUserList(fastify.config.BASIC_AUTH_USERS)),
+    );
+    fastify.registerAuthStrategy(
+      AuthScheme.Jwt,
+      createJwtStrategy({
+        secret: fastify.config.JWT_SECRET || undefined,
+        jwksUri: fastify.config.JWT_JWKS_URI || undefined,
+        issuer: fastify.config.JWT_ISSUER || undefined,
+        audience: fastify.config.JWT_AUDIENCE || undefined,
+      }),
     );
   },
   { name: "auth" },

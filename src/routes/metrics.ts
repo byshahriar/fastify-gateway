@@ -1,11 +1,9 @@
 import type { FastifyPluginAsync } from "fastify";
 import { ErrorMessage, Header, HttpStatus } from "@/constants";
-import { errorBody, safeEqual } from "@/utils";
+import { errorBody, parseBearerToken, safeEqual } from "@/utils";
 
 // Exempts the route from rate limiting so scrapes never consume a budget.
 const noRateLimit = { config: { rateLimit: false } };
-
-const BEARER_PATTERN = /^bearer +(\S+)$/i;
 
 /**
  * Prometheus scrape endpoint. Serves the per-instance registry maintained by
@@ -25,8 +23,8 @@ const metrics: FastifyPluginAsync = async (fastify) => {
 
   fastify.get("/metrics", noRateLimit, async (req, reply) => {
     if (token) {
-      const match = BEARER_PATTERN.exec(req.headers[Header.Authorization] ?? "");
-      if (!match || !safeEqual(match[1], token)) {
+      const provided = parseBearerToken(req.headers[Header.Authorization]);
+      if (!provided || !safeEqual(provided, token)) {
         return reply
           .code(HttpStatus.Unauthorized)
           .send(errorBody(req.id, ErrorMessage.Unauthorized));
