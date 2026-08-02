@@ -1,6 +1,6 @@
 import type { BasicCredentials } from "@/interfaces";
 
-const BASIC_SCHEME_PATTERN = /^basic +(.+)$/i;
+const BASIC_SCHEME_PATTERN = /^basic +(\S+)$/i;
 
 /**
  * Parses a comma-separated `username:password` list (the `BASIC_AUTH_USERS`

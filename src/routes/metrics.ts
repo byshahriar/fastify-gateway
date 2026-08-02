@@ -5,7 +5,7 @@ import { errorBody, safeEqual } from "@/utils";
 // Exempts the route from rate limiting so scrapes never consume a budget.
 const noRateLimit = { config: { rateLimit: false } };
 
-const BEARER_PATTERN = /^bearer +(.+)$/i;
+const BEARER_PATTERN = /^bearer +(\S+)$/i;
 
 /**
  * Prometheus scrape endpoint. Serves the per-instance registry maintained by

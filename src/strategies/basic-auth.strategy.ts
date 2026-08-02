@@ -3,7 +3,7 @@ import type { AuthStrategy } from "@/types";
 import { parseBasicAuthHeader, safeEqual, sendMisconfigured, sendUnauthorized } from "@/utils";
 
 // Fallback comparison target so unknown-user lookups take comparable time.
-const DUMMY_PASSWORD = "gateway-timing-equalizer";
+const TIMING_EQUALIZER = "gateway-timing-equalizer";
 
 // `WWW-Authenticate` challenge sent on failed Basic auth.
 const BASIC_CHALLENGE = 'Basic realm="gateway"';
@@ -34,7 +34,7 @@ export function createBasicAuthStrategy(users: Map<string, string>): AuthStrateg
     // reorder to short-circuit on `expected !== undefined`.
     const authorized =
       credentials !== null &&
-      safeEqual(credentials.password, expected ?? DUMMY_PASSWORD) &&
+      safeEqual(credentials.password, expected ?? TIMING_EQUALIZER) &&
       expected !== undefined;
 
     if (!authorized) {
