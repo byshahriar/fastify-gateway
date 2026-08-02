@@ -1,0 +1,15 @@
+# Plain (non-operator) Prometheus scrape config for the gateway.
+# Add this job to the `scrape_configs` of your prometheus.yml, and load the
+# alert rules by pointing `rule_files` at alerts.yml.
+scrape_configs:
+  - job_name: fastify-gateway
+    metrics_path: /metrics
+    scrape_interval: 15s
+    # Required only when METRICS_TOKEN is set on the gateway.
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/secrets/gateway-metrics-token
+    static_configs:
+      - targets:
+          - gateway-1:8080
+          - gateway-2:8080

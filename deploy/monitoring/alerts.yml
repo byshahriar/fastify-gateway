@@ -1,0 +1,86 @@
+# Plain Prometheus alerting rules for fastify-gateway (non-operator setups).
+# Load via `rule_files` in prometheus.yml. The Prometheus Operator
+# equivalent is prometheus-rule.yaml; keep the two in sync.
+groups:
+- name: fastify-gateway.availability
+  rules:
+  - alert: GatewayInstanceDown
+    expr: up{job="fastify-gateway"} == 0
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: Gateway instance {{ $labels.instance }} is down
+      description: Prometheus cannot scrape {{ $labels.instance }} for over 2 minutes.
+  - alert: GatewayAllInstancesDown
+    expr: sum(up{job="fastify-gateway"}) == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: All gateway instances are down
+      description: "No fastify-gateway instance is reachable \u2014 the edge is offline."
+- name: fastify-gateway.errors
+  rules:
+  - alert: GatewayHighErrorRate
+    expr: "sum(rate(http_requests_total{job=\"fastify-gateway\",status=~\"5..\"}[5m]))\n  / sum(rate(http_requests_total{job=\"\
+      fastify-gateway\"}[5m])) > 0.05\n"
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Gateway 5xx error rate above 5%
+      description: '{{ $value | humanizePercentage }} of requests are failing with 5xx over the last 5m.'
+  - alert: GatewayUpstreamFailures
+    expr: 'sum(rate(http_requests_total{job="fastify-gateway",status=~"50[234]"}[5m])) > 1
+
+      '
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Gateway returning upstream failures (502/503/504)
+      description: Upstreams are unreachable or timing out ({{ $value | printf "%.2f" }} req/s of 502/503/504).
+- name: fastify-gateway.latency
+  rules:
+  - alert: GatewayHighLatencyP99
+    expr: "histogram_quantile(0.99,\n  sum(rate(http_request_duration_seconds_bucket{job=\"fastify-gateway\"\
+      }[5m])) by (le)\n) > 1\n"
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: Gateway p99 latency above 1s
+      description: 99th-percentile request duration is {{ $value | printf "%.2f" }}s over the last 5m.
+- name: fastify-gateway.saturation
+  rules:
+  - alert: GatewayRateLimitSpike
+    expr: 'sum(rate(http_requests_total{job="fastify-gateway",status="429"}[5m])) > 10
+
+      '
+    for: 10m
+    labels:
+      severity: info
+    annotations:
+      summary: Elevated rate-limit rejections
+      description: "{{ $value | printf \"%.1f\" }} req/s are being rate limited \u2014 a client may be\
+        \ misbehaving or limits may be too low."
+  - alert: GatewayEventLoopLagHigh
+    expr: nodejs_eventloop_lag_p99_seconds{job="fastify-gateway"} > 0.1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Event loop lag above 100ms on {{ $labels.instance }}
+      description: "The Node.js event loop p99 lag is {{ $value | printf \"%.3f\" }}s \u2014 the instance\
+        \ is CPU-saturated."
+  - alert: GatewayHeapNearLimit
+    expr: "nodejs_heap_size_used_bytes{job=\"fastify-gateway\"}\n  / nodejs_heap_size_total_bytes{job=\"\
+      fastify-gateway\"} > 0.9\n"
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: Heap usage above 90% on {{ $labels.instance }}
+      description: "Used heap is {{ $value | humanizePercentage }} of total \u2014 investigate a leak\
+        \ or raise memory limits."

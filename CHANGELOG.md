@@ -36,7 +36,8 @@ and this project adheres to
 - Schema-validated configuration with fail-fast boot and a schema-derived
   config type
 - Prometheus metrics at `/metrics`: request counters and duration histograms
-  labeled by method, route pattern, and status
+  labeled by method, route pattern, and status, with ready-to-use scrape
+  configuration and alerting rules under `deploy/monitoring/`
 - Readiness draining and bounded graceful shutdown for rolling deploys
 - Multi-stage Docker image and a Compose topology with demo upstreams
 - GitHub Actions automation: CI (with a Docker build smoke test), CodeQL

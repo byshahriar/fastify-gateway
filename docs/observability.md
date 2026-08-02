@@ -71,3 +71,12 @@ Beyond logs and traces, the gateway serves Prometheus metrics at
 route pattern (bounded — never the raw URL), and status, plus Node.js process
 metrics. The endpoint can require a bearer token (`METRICS_TOKEN`).
 Deployment guidance lives in [Operations → Metrics](operations.md#metrics).
+
+## Alerting
+
+Ready-to-use Prometheus scrape configuration and alerting rules ship in
+[`deploy/monitoring/`](../deploy/monitoring/README.md), in both Prometheus
+Operator (`PrometheusRule` / `ServiceMonitor`) and plain-Prometheus formats.
+The rules cover availability, 5xx and upstream-failure rates, p99 latency,
+rate-limit spikes, and process health (event-loop lag, heap), each with a
+severity and a first-response note.
