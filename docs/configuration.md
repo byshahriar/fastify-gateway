@@ -66,6 +66,13 @@ allowing traffic — see [Authentication](authentication.md).
 | Variable | Default | Description |
 | --- | --- | --- |
 | `METRICS_TOKEN` | — | Bearer token required to scrape `GET /metrics`. Empty leaves the endpoint open — protect it with network policy in that case |
+| `ALERTS_ENABLED` | `false` | Feature flag for Slack/Discord alerts on 5xx responses |
+| `SLACK_WEBHOOK_URL` | — | Slack incoming-webhook URL for alerts |
+| `DISCORD_WEBHOOK_URL` | — | Discord webhook URL for alerts |
+| `ALERT_THROTTLE_MS` | `60000` | Minimum interval between alert notifications |
+| `OTEL_ENABLED` | `false` | Feature flag for OpenTelemetry tracing (process option) |
+| `OTEL_SERVICE_NAME` | `fastify-gateway` | Service name on emitted spans (process option) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | — | OTLP collector endpoint; read by the OTel SDK (process option) |
 
 ### Rate limiting
 

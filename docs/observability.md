@@ -72,11 +72,40 @@ route pattern (bounded — never the raw URL), and status, plus Node.js process
 metrics. The endpoint can require a bearer token (`METRICS_TOKEN`).
 Deployment guidance lives in [Operations → Metrics](operations.md#metrics).
 
-## Alerting
+## Chat alerting
 
-Ready-to-use Prometheus scrape configuration and alerting rules ship in
-[`deploy/monitoring/`](../deploy/monitoring/README.md), in both Prometheus
-Operator (`PrometheusRule` / `ServiceMonitor`) and plain-Prometheus formats.
-The rules cover availability, 5xx and upstream-failure rates, p99 latency,
-rate-limit spikes, and process health (event-loop lag, heap), each with a
-severity and a first-response note.
+Optional Slack and Discord notifications, off by default (feature flag
+`ALERTS_ENABLED`). When enabled with at least one webhook, a `5xx` response
+posts a message to every configured channel — Slack (`SLACK_WEBHOOK_URL`) and
+Discord (`DISCORD_WEBHOOK_URL`) — including the status, method, route pattern,
+and request id. Notifications are throttled to one per `ALERT_THROTTLE_MS`
+(default 60s) so a burst of errors cannot flood the channel, delivery runs
+after the response is sent and never affects the client, and a failing
+webhook is logged rather than raised.
+
+Both channels are independent: configure either, both, or neither. This is a
+lightweight signal for humans; for full metric-based alerting, scrape
+`/metrics` with Prometheus (or export traces via OpenTelemetry, below) and
+alert there.
+
+## OpenTelemetry
+
+Optional OpenTelemetry tracing, off by default (feature flag `OTEL_ENABLED`).
+When enabled, the gateway starts the OpenTelemetry Node SDK before loading the
+application, instruments incoming HTTP, the undici upstream calls, and Fastify,
+and exports spans over OTLP/HTTP. This emits real spans to a collector,
+complementing the gateway's native W3C trace-context propagation (which works
+with or without the SDK).
+
+The exporter and sampling are configured through the standard `OTEL_*`
+environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `OTEL_ENABLED` | Feature flag (`true` to start the SDK) |
+| `OTEL_SERVICE_NAME` | Service name on emitted spans (default `fastify-gateway`) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Collector endpoint, e.g. `http://otel-collector:4318` |
+
+The SDK and its dependencies are imported dynamically, so nothing loads when
+the flag is off. If no collector is reachable, the SDK logs export failures
+but the gateway continues to serve normally.

@@ -20,7 +20,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      exclude: ["src/server.ts", "src/types/**"],
+      exclude: ["src/server.ts", "src/otel.ts", "src/types/**"],
       // text: terminal summary; lcov: SonarQube; cobertura: GitLab coverage.
       reporter: ["text", "lcov", "cobertura"],
       thresholds: {

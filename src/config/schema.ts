@@ -47,6 +47,14 @@ export const configSchema = {
     // open — protect it with network policy in that case.
     METRICS_TOKEN: { type: "string", default: "" },
 
+    // Chat-channel alerting (feature flag). When enabled, a 5xx response
+    // triggers a throttled notification to any configured Slack/Discord
+    // webhook.
+    ALERTS_ENABLED: { type: "boolean", default: false },
+    SLACK_WEBHOOK_URL: { type: "string", default: "" },
+    DISCORD_WEBHOOK_URL: { type: "string", default: "" },
+    ALERT_THROTTLE_MS: { type: "number", default: 60000 },
+
     UPSTREAM_TIMEOUT_MS: { type: "number", default: 10000 },
     UPSTREAM_CONNECT_TIMEOUT_MS: { type: "number", default: 2000 },
     UPSTREAM_MAX_CONNECTIONS: { type: "number", default: 128 },

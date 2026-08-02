@@ -10,6 +10,7 @@ import authPlugin from "@/plugins/auth";
 import rateLimitPlugin from "@/plugins/rate-limit";
 import errorHandlerPlugin from "@/plugins/error-handler";
 import metricsPlugin from "@/plugins/metrics";
+import alertsPlugin from "@/plugins/alerts";
 import healthRoutes from "@/routes/health";
 import metricsRoutes from "@/routes/metrics";
 import usersGateway from "@/services/users.gateway";
@@ -66,6 +67,7 @@ export async function buildApp() {
   await app.register(rateLimitPlugin);
   await app.register(errorHandlerPlugin);
   await app.register(metricsPlugin);
+  await app.register(alertsPlugin);
 
   await app.register(healthRoutes);
   await app.register(metricsRoutes);
