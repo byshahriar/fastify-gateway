@@ -30,6 +30,9 @@ and this project adheres to
   responses
 - Uniform error semantics: upstream failures mapped to `502`/`504`, internal
   details never exposed, every error body carrying the request id
+- Structured JSON logging (Pino) with ISO-8601 timestamps and level labels,
+  selectable console or rotating-file channel (`LOG_DESTINATION`) with size/
+  interval rotation and automatic retention
 - Per-IP rate limiting with health-probe exemption and an optional Redis
   store (`REDIS_URL`) shared across replicas, CORS allow-list, helmet
   security headers, credential redaction in logs

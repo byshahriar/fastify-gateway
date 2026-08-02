@@ -7,3 +7,5 @@ coverage/
 
 # Accidental husky bad-arg artifact (e.g. `husky --version`)
 /--version/
+
+logs/

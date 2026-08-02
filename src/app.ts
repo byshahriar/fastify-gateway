@@ -3,6 +3,7 @@ import env from "@fastify/env";
 import { randomUUID } from "node:crypto";
 import { configSchema } from "@/config/schema";
 import { envBoolean, envNumber } from "@/config/env";
+import { buildLoggerOptions } from "@/config/logger";
 import { Header, SAFE_HEADER_ID_PATTERN } from "@/constants";
 import securityPlugin from "@/plugins/security";
 import requestContextPlugin from "@/plugins/request-context";
@@ -36,14 +37,7 @@ export async function buildApp() {
   // These options configure the Fastify factory, so they read from raw env
   // before @fastify/env runs; envNumber/envBoolean fail fast on bad values.
   const app = Fastify({
-    logger: {
-      level: process.env.LOG_LEVEL ?? "info",
-      redact: [
-        `req.headers.${Header.Authorization}`,
-        `req.headers["${Header.ApiKey}"]`,
-        `req.headers.${Header.Cookie}`,
-      ],
-    },
+    logger: buildLoggerOptions(),
     bodyLimit: envNumber("BODY_LIMIT", 1_048_576, 1),
     genReqId: (req) => {
       const incoming = req.headers[Header.RequestId];

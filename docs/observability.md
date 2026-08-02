@@ -33,7 +33,22 @@ replaced, never forwarded.
 
 ## Logging
 
-Structured JSON logging via Pino (Fastify's built-in logger).
+Structured JSON logging via Pino (Fastify's built-in logger), in a standard
+format: ISO-8601 timestamps and string level labels (`info`, `warn`, `error`).
+
+### Channels
+
+`LOG_DESTINATION` selects where logs go:
+
+- **`console`** (default) — line-delimited JSON to stdout. Correct for
+  containers, where the platform (Docker/Kubernetes) handles rotation and
+  retention. This is the recommended setup on Kubernetes.
+- **`file`** — a rotating file via `pino-roll`. Rotation is triggered by size
+  (`LOG_ROTATION_MAX_SIZE`) or interval (`LOG_ROTATION_FREQUENCY`), and old
+  files are pruned automatically to keep the most recent `LOG_RETENTION_FILES`.
+  Use this for VM or bare-metal deployments without a log shipper.
+
+### Fields
 
 - Every request log line carries `reqId`, `correlationId`, and `traceId`
   bindings — grep any one id to reconstruct a request's story.
@@ -46,7 +61,8 @@ Example (formatted for readability):
 
 ```json
 {
-  "level": 30,
+  "level": "info",
+  "time": "2026-08-13T10:18:19.677Z",
   "reqId": "3f1a…",
   "correlationId": "checkout-7841",
   "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",

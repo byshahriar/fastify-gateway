@@ -30,6 +30,11 @@ timeout).
 | `PORT` | `8080` | Listen port |
 | `HOST` | `0.0.0.0` | Listen address |
 | `LOG_LEVEL` | `info` | Pino log level (factory option) |
+| `LOG_DESTINATION` | `console` | Log channel: `console` (stdout) or `file` (rotating file) (factory option) |
+| `LOG_FILE` | `logs/gateway.log` | Base path when `LOG_DESTINATION=file` (factory option) |
+| `LOG_ROTATION_FREQUENCY` | `daily` | Time-based rotation: `daily`, `hourly`, or a millisecond interval (factory option) |
+| `LOG_ROTATION_MAX_SIZE` | `10m` | Size-based rotation threshold, e.g. `10m` (factory option) |
+| `LOG_RETENTION_FILES` | `14` | Number of recent log files to retain; older ones are deleted automatically (factory option) |
 | `BODY_LIMIT` | `1048576` | Max body size in bytes for gateway-served routes; proxied bodies are streamed, not buffered (factory option) |
 | `TRUST_PROXY` | `true` | Resolve `req.ip` from `x-forwarded-for`. Set `false` when clients connect directly, or rate-limit keys become spoofable (factory option) |
 | `KEEP_ALIVE_TIMEOUT_MS` | `72000` | Server keep-alive timeout; keep it above the load balancer's idle timeout (factory option) |
