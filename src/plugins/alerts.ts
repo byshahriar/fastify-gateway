@@ -1,11 +1,11 @@
 import fp from "fastify-plugin";
 import pRetry from "p-retry";
-import { HttpStatus } from "@/constants";
-import { selectAlertChannel } from "@/utils";
+import { alertThreshold, selectAlertChannel, severityForStatus } from "@/utils";
 
 /**
  * Chat-channel alerting plugin (feature flag: `ALERTS_ENABLED`). When enabled
- * with `ALERT_CHANNEL` set to a configured channel, a 5xx response posts a
+ * with `ALERT_CHANNEL` set to a configured channel, a response at or above the
+ * `ALERT_LEVEL` threshold (`error` = 5xx, `warn` = 4xx + 5xx) posts a
  * notification to that single channel (Slack or Discord), throttled to at most
  * one per `ALERT_THROTTLE_MS` to avoid flooding it. Delivery is retried with
  * exponential backoff (`ALERT_RETRIES`), runs after the response is sent so it
@@ -30,6 +30,7 @@ export default fp(
 
     const throttleMs = fastify.config.ALERT_THROTTLE_MS;
     const retries = fastify.config.ALERT_RETRIES;
+    const threshold = alertThreshold(fastify.config.ALERT_LEVEL);
     let lastSentAt = 0;
 
     async function deliver(message: string) {
@@ -49,15 +50,17 @@ export default fp(
     }
 
     fastify.addHook("onResponse", async (req, reply) => {
-      if (reply.statusCode < HttpStatus.InternalServerError) return;
+      if (reply.statusCode < threshold) return;
 
       const now = Date.now();
       if (now - lastSentAt < throttleMs) return;
       lastSentAt = now;
 
+      const severity = severityForStatus(reply.statusCode);
+      const icon = severity === "error" ? ":rotating_light:" : ":warning:";
       // Route pattern, not the raw URL, to avoid leaking query strings.
       const route = req.routeOptions.url ?? req.url;
-      const message = `:rotating_light: fastify-gateway: ${reply.statusCode} on ${req.method} ${route} (requestId ${req.id})`;
+      const message = `${icon} fastify-gateway [${severity}]: ${reply.statusCode} on ${req.method} ${route} (requestId ${req.id})`;
 
       try {
         await deliver(message);
@@ -69,7 +72,10 @@ export default fp(
       }
     });
 
-    fastify.log.info({ channel: channel.name }, "chat alerting enabled");
+    fastify.log.info(
+      { channel: channel.name, level: fastify.config.ALERT_LEVEL },
+      "chat alerting enabled",
+    );
   },
   { name: "alerts" },
 );

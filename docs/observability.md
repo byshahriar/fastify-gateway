@@ -77,8 +77,10 @@ Deployment guidance lives in [Operations → Metrics](operations.md#metrics).
 Optional chat notifications, off by default (feature flag `ALERTS_ENABLED`).
 One channel is active at a time, chosen by `ALERT_CHANNEL` (`slack`,
 `discord`, or `none`); the selected channel's webhook (`SLACK_WEBHOOK_URL` or
-`DISCORD_WEBHOOK_URL`) receives a message on every `5xx` response, including
-the status, method, route pattern, and request id. Notifications are throttled
+`DISCORD_WEBHOOK_URL`) receives a message on every response at or above the
+`ALERT_LEVEL` threshold — `error` (5xx only, the default) or `warn` (4xx and
+5xx). The message carries the derived severity and includes the status,
+method, route pattern, and request id. Notifications are throttled
 to one per `ALERT_THROTTLE_MS` (default 60s) so a burst of errors cannot flood
 the channel. Delivery is retried with exponential backoff (`ALERT_RETRIES`),
 runs after the response is sent so it never affects the client, and a webhook

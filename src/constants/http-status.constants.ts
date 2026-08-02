@@ -2,6 +2,7 @@
  * HTTP status codes the gateway responds with.
  */
 export const HttpStatus = {
+  BadRequest: 400,
   Unauthorized: 401,
   NotFound: 404,
   InternalServerError: 500,

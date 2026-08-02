@@ -1,4 +1,5 @@
 export { discordChannel, selectAlertChannel, slackChannel } from "@/utils/alert-channels.util";
+export { alertThreshold, severityForStatus } from "@/utils/alert-level.util";
 export { encodeBasicAuth, parseBasicAuthHeader, parseUserList } from "@/utils/basic-auth.util";
 export { parseBearerToken } from "@/utils/bearer.util";
 export { safeEqual } from "@/utils/crypto.util";

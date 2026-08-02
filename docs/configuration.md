@@ -68,6 +68,7 @@ allowing traffic — see [Authentication](authentication.md).
 | `METRICS_TOKEN` | — | Bearer token required to scrape `GET /metrics`. Empty leaves the endpoint open — protect it with network policy in that case |
 | `ALERTS_ENABLED` | `false` | Feature flag for chat alerts on 5xx responses |
 | `ALERT_CHANNEL` | `none` | Active alert channel: `none`, `slack`, or `discord` |
+| `ALERT_LEVEL` | `error` | Lowest level to alert on: `error` (5xx) or `warn` (4xx + 5xx) |
 | `SLACK_WEBHOOK_URL` | — | Slack incoming-webhook URL (used when `ALERT_CHANNEL=slack`) |
 | `DISCORD_WEBHOOK_URL` | — | Discord webhook URL (used when `ALERT_CHANNEL=discord`) |
 | `ALERT_THROTTLE_MS` | `60000` | Minimum interval between alert notifications |

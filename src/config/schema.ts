@@ -52,6 +52,8 @@ export const configSchema = {
     // by ALERT_CHANNEL, using that channel's webhook URL.
     ALERTS_ENABLED: { type: "boolean", default: false },
     ALERT_CHANNEL: { type: "string", enum: ["none", "slack", "discord"], default: "none" },
+    // Lowest response class to alert on: "error" (5xx) or "warn" (4xx + 5xx).
+    ALERT_LEVEL: { type: "string", enum: ["error", "warn"], default: "error" },
     SLACK_WEBHOOK_URL: { type: "string", default: "" },
     DISCORD_WEBHOOK_URL: { type: "string", default: "" },
     ALERT_THROTTLE_MS: { type: "number", default: 60000 },

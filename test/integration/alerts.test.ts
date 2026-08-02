@@ -139,3 +139,41 @@ describe("chat-channel alerting", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("alert level", () => {
+  it("labels a 5xx alert as error at the default level", async () => {
+    const gateway = await buildAlertingApp();
+
+    await gateway.inject({ method: "GET", url: "/api/public/status" });
+
+    await vi.waitFor(() => expect(slack!.requests).toHaveLength(1));
+    expect(JSON.parse(slack!.requests[0].body).text).toContain("[error]");
+  });
+
+  it("does not alert on a 4xx at the error level", async () => {
+    const gateway = await buildAlertingApp();
+
+    await gateway.inject({ method: "GET", url: "/nope" }); // 404
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(slack!.requests).toHaveLength(0);
+  });
+
+  it("alerts on a 4xx as warning at the warn level", async () => {
+    const gateway = await buildAlertingApp({ ALERT_LEVEL: "warn" });
+
+    const res = await gateway.inject({ method: "GET", url: "/nope" });
+    expect(res.statusCode).toBe(404);
+
+    await vi.waitFor(() => expect(slack!.requests).toHaveLength(1));
+    const text = JSON.parse(slack!.requests[0].body).text;
+    expect(text).toContain("[warning]");
+    expect(text).toContain("404");
+  });
+
+  it("refuses to start with an invalid ALERT_LEVEL", async () => {
+    await expect(
+      buildTestApp({ ALERTS_ENABLED: "true", ALERT_CHANNEL: "slack", ALERT_LEVEL: "debug" }),
+    ).rejects.toThrow();
+  });
+});
