@@ -70,6 +70,11 @@ Full index: [docs/](docs/README.md).
 | [Extending](docs/extending.md) | Adding services, override points, new auth schemes |
 | [Testing](docs/testing.md) | Test layers, running, writing tests |
 
+## Roadmap
+
+What is shipped, what the platform owns, and what may come next:
+[ROADMAP.md](ROADMAP.md).
+
 ## Contributing
 
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the

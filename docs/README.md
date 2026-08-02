@@ -35,5 +35,6 @@ Guides for using, operating, and extending fastify-gateway. Start with the
 - [Configuration reference](configuration.md#reference)
 - [Endpoint reference](endpoints.md)
 - [Error semantics](operations.md#error-semantics)
+- [Roadmap](../ROADMAP.md)
 - [Changelog](../CHANGELOG.md)
 - [Security policy](../SECURITY.md)
