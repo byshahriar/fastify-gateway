@@ -66,13 +66,18 @@ flowchart LR
   balancer or a sidecar.
 - **Proxy trust.** Set `TRUST_PROXY=false` when clients connect directly, or
   `x-forwarded-for` (and thus rate-limit keys) can be spoofed.
-- **Strong secrets.** `GATEWAY_API_KEY`, `BASIC_AUTH_USERS`, and
+- **Strong secrets.** `GATEWAY_API_KEY`, `BASIC_AUTH_USERS`, `JWT_SECRET`, and
   `METRICS_TOKEN` must be high-entropy; the shipped `change-me` values are
-  placeholders.
+  placeholders. Prefer `JWT_JWKS_URI` (asymmetric keys) over a shared HMAC
+  secret where the identity provider supports it.
 - **Metrics exposure.** `/metrics` reveals process and traffic information;
   set `METRICS_TOKEN` and/or restrict it by network policy.
-- **Replica-wide rate limiting.** The in-memory limiter is per-instance; wire
-  the Redis store when running replicas (see [Operations](operations.md)).
+- **Replica-wide rate limiting.** The in-memory limiter is per-instance; set
+  `REDIS_URL` for a shared store when running replicas (see
+  [Operations](operations.md)).
+- **Alert and collector endpoints.** When alerting or OpenTelemetry are
+  enabled, treat `SLACK_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL` and the OTLP
+  endpoint as trusted sinks reachable from the gateway.
 
 ## What upstreams remain responsible for
 

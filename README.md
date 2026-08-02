@@ -13,15 +13,23 @@ context on every hop — all in a single small deployable.
 
 - **Declarative services** — each upstream is a small class stating its prefix,
   upstream URL, and auth policy; shared proxy behavior lives in one base class
-- **Pluggable edge auth** — API key and HTTP Basic built in, both constant-time;
-  new schemes register through a strategy registry without touching existing code
+- **Pluggable edge auth** — API key, HTTP Basic, and JWT (HMAC or JWKS) built
+  in, all constant-time where applicable; new schemes register through a
+  strategy registry without touching existing code
 - **Service-to-service auth** — the gateway presents its own credentials to
   upstreams, so client credentials never leak past the edge
 - **Distributed tracing** — W3C `traceparent`, `x-request-id`, and
-  `x-correlation-id` honored, generated, logged, and forwarded on every request
+  `x-correlation-id` honored, generated, logged, and forwarded on every
+  request, with optional OpenTelemetry span export
+- **Rate limiting** — per-IP, in-memory or shared across replicas via Redis,
+  with an optional escalating ban
+- **Observability** — Prometheus metrics, structured logs, and optional
+  Slack/Discord alerting on errors
 - **Production posture** — schema-validated config that fails fast at boot,
-  per-IP rate limiting, security headers, uniform error responses that never
-  leak internals, and graceful shutdown
+  security headers, uniform error responses that never leak internals, bounded
+  timeouts, and graceful shutdown with readiness draining
+- **Feature-flagged extras** — Redis, alerting, and OpenTelemetry are all
+  opt-in and off by default, so nothing loads unless you enable it
 - **Typed end to end** — strict TypeScript, with the config type derived from
   the validation schema itself
 

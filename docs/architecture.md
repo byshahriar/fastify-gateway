@@ -36,22 +36,32 @@ shape described in [Operations](operations.md).
 ```
 src/
 ├── app.ts                     composition root — registration order lives here
-├── server.ts                  entry point — listen + graceful shutdown
+├── server.ts                  entry point — listen, OTel bootstrap, shutdown
+├── otel.ts                    OpenTelemetry SDK bootstrap (feature-flagged)
 ├── config/
 │   ├── schema.ts              env schema, validated by @fastify/env at boot
 │   └── env.ts                 fail-fast readers for pre-schema factory options
-├── constants/                 header names, status codes, error messages
-├── enums/                     enum-like const objects (AuthScheme)
-├── interfaces/                object shapes (ErrorBody, TraceContext, …)
+├── constants/                 header names, HTTP statuses/methods, messages
+├── enums/                     enum-like const objects (AuthScheme, AlertLevel, …)
+├── interfaces/                object shapes (ErrorBody, TraceContext, AlertChannel)
 ├── types/                     type aliases + ambient Fastify augmentation
 │   ├── gateway-config.type.ts GatewayConfig, derived from the env schema
 │   └── fastify.d.ts           typings for runtime decorators
-├── utils/                     pure helpers (crypto, basic-auth, tracing, urls, replies)
-├── strategies/                edge auth strategies — one factory per scheme
+├── utils/                     pure helpers (crypto, auth parsing, tracing, alerts, …)
+├── strategies/                edge auth strategies — api-key, basic, jwt
 ├── core/
 │   └── service-gateway.ts     abstract ServiceGateway + toPlugin() bridge
 ├── plugins/                   cross-cutting concerns, applied app-wide
+│   ├── security.ts            helmet + CORS
+│   ├── request-context.ts     correlation ids + trace propagation
+│   ├── auth.ts                the auth strategy registry
+│   ├── rate-limit.ts          per-IP limiter (in-memory or Redis)
+│   ├── error-handler.ts       uniform error and 404 responses
+│   ├── metrics.ts             Prometheus metrics collection
+│   └── alerts.ts              Slack/Discord alerting (feature-flagged)
 ├── routes/                    endpoints the gateway serves itself
+│   ├── health.ts              /healthz, /readyz
+│   └── metrics.ts             /metrics
 └── services/                  endpoints the gateway proxies — one class each
 ```
 
@@ -150,3 +160,9 @@ deliberately excluded.
 **Streaming, not buffering.** Proxied request and response bodies stream
 through pooled undici connections. `BODY_LIMIT` applies only to routes the
 gateway parses itself.
+
+**Feature-flagged, dynamically-loaded extras.** Redis rate limiting, chat
+alerting, and OpenTelemetry are opt-in and off by default. Where a feature
+pulls heavy dependencies — notably OpenTelemetry — they are imported
+dynamically only when the flag is on, so a disabled feature costs nothing at
+startup and never enters the module graph.

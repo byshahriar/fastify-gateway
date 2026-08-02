@@ -25,6 +25,10 @@ misconfigured. The error message names the offending variable.
   in constant time; a case difference is a mismatch.
 - **Basic-auth service** — missing/wrong credentials, or an unknown user. The
   response includes a `WWW-Authenticate: Basic` challenge.
+- **JWT service** — the `Authorization: Bearer` token is missing, expired,
+  signed with the wrong key, or fails a configured `JWT_ISSUER`/`JWT_AUDIENCE`
+  claim. With `JWT_JWKS_URI`, confirm the collector/IdP endpoint is reachable
+  from the gateway.
 - **`/metrics`** — `METRICS_TOKEN` is set and the `Authorization: Bearer`
   token is missing or wrong.
 
@@ -70,6 +74,26 @@ tree.
 - `tracestate` is dropped when the gateway starts a new trace (no valid
   incoming `traceparent`); this is intentional. See
   [Observability](observability.md).
+
+## Alerts are not arriving
+
+- Confirm `ALERTS_ENABLED=true` **and** `ALERT_CHANNEL` is `slack` or `discord`
+  with the matching webhook URL set — a mismatch logs a warning at boot and
+  disables alerting.
+- Only responses at or above `ALERT_LEVEL` alert (`error` = 5xx, `warn` also
+  4xx); a 404 does not alert at the default `error` level.
+- Notifications are throttled to one per `ALERT_THROTTLE_MS`; a burst produces
+  a single message.
+- A webhook that fails every attempt (after `ALERT_RETRIES`) is logged at
+  `error` — check the gateway logs for `alert delivery failed`.
+
+## Traces are not appearing in the collector
+
+- Set `OTEL_ENABLED=true` and point `OTEL_EXPORTER_OTLP_ENDPOINT` at a
+  reachable OTLP/HTTP collector. Export failures are logged by the SDK but do
+  not stop the gateway.
+- The gateway propagates `traceparent` regardless of `OTEL_ENABLED`; the flag
+  only controls whether it also *exports* its own spans.
 
 ## Shutdown seems abrupt
 
