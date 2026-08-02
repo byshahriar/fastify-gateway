@@ -49,7 +49,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: ghcr.io/OWNER/fastify-gateway:1.0.0
+          image: ghcr.io/byshahriar/fastify-gateway:1.0.0
           ports:
             - containerPort: 8080
           env:
@@ -138,16 +138,16 @@ publishes a multi-tag image to the GitHub Container Registry:
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
-# -> ghcr.io/OWNER/fastify-gateway:1.0.0, :1.0, :latest
+# -> ghcr.io/byshahriar/fastify-gateway:1.0.0, :1.0, :latest
 ```
 
 Pull it directly:
 
 ```bash
-docker pull ghcr.io/OWNER/fastify-gateway:1.0.0
+docker pull ghcr.io/byshahriar/fastify-gateway:1.0.0
 ```
 
-Replace `OWNER` with your GitHub org or user.
+The image is published to `ghcr.io/byshahriar/fastify-gateway`.
 
 ## Configuration in containers
 

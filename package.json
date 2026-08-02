@@ -5,6 +5,15 @@
   "type": "module",
   "main": "dist/server.js",
   "license": "MIT",
+  "author": "byshahriar",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/byshahriar/fastify-gateway.git"
+  },
+  "bugs": {
+    "url": "https://github.com/byshahriar/fastify-gateway/issues"
+  },
+  "homepage": "https://github.com/byshahriar/fastify-gateway#readme",
   "engines": {
     "node": ">=20.11"
   },

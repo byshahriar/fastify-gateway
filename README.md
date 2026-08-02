@@ -1,18 +1,13 @@
 # fastify-gateway
 
-![CI](https://img.shields.io/badge/CI-passing-brightgreen)
+[![CI](https://github.com/byshahriar/fastify-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/byshahriar/fastify-gateway/actions/workflows/ci.yml)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20.11-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 A lightweight, extensible API gateway built on [Fastify](https://fastify.dev).
 It authenticates requests at the edge, proxies them to upstream services with
 fail-fast timeouts and connection pooling, and propagates distributed-tracing
 context on every hop — all in a single small deployable.
-
-> **Note:** the CI/coverage badges above are static placeholders. Once the
-> repository is hosted, point them at your provider (e.g. a GitHub Actions
-> workflow badge and a coverage service).
 
 ## Why this gateway
 
