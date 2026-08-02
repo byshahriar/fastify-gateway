@@ -102,6 +102,34 @@ Key points:
 - **Metrics scraping** — expose `/metrics` to Prometheus with a
   `METRICS_TOKEN`; keep it off any public ingress route.
 
+## Division of responsibility
+
+This is an **edge (north-south) gateway**: it sits at the boundary where
+external clients enter the cluster. On Kubernetes it does not — and should
+not — reimplement what the platform already provides. Knowing which layer
+owns what keeps the gateway small and the architecture clear.
+
+| Concern | Owned by | Notes |
+| --- | --- | --- |
+| External auth, edge rate limiting, CORS, request shaping | **This gateway** | The north-south boundary |
+| Service discovery | **Kubernetes** | Services + DNS; the gateway targets a Service name |
+| Load balancing across replicas | **Kubernetes** | ClusterIP spreads traffic (L4); a mesh adds L7 |
+| Config and secret delivery | **Kubernetes** | ConfigMap/Secret + rolling restart |
+| Circuit breaking, retries, outlier detection | **Service mesh** | Istio/Linkerd sidecars (east-west) |
+| mutual TLS between services | **Service mesh** | Automatic east-west mTLS |
+| Traffic splitting / canary | **Mesh or rollout controller** | e.g. Argo Rollouts, Flagger |
+| Trace span export | **Mesh or OTel collector** | The gateway originates and propagates `traceparent` |
+
+Because discovery and load balancing are the platform's job, the gateway's
+"one URL per service" is the intended pattern on Kubernetes, not a
+limitation — point each service at a Kubernetes Service DNS name and let the
+platform balance behind it. See the [security model](security-model.md) for
+the trust-boundary view and [ROADMAP](../ROADMAP.md) for the full scope.
+
+Plain Kubernetes gives you discovery, L4 load balancing, and config rollout.
+Circuit breaking, retries, and mTLS require actually running a service mesh —
+they are not automatic just because you are on Kubernetes.
+
 ## Releases
 
 Pushing a `v*` tag runs the release workflow, which re-verifies the build and
