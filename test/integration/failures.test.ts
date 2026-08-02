@@ -60,6 +60,28 @@ describe("request limits", () => {
     await upstream.close();
   });
 
+  it("bans a client after repeated over-limit requests", async () => {
+    const upstream = await startUpstream();
+    const app = await buildTestApp({
+      PUBLIC_SERVICE_URL: upstream.url,
+      RATE_LIMIT_MAX: "1",
+      RATE_LIMIT_BAN: "1",
+    });
+
+    const codes: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      const res = await app.inject({ method: "GET", url: "/api/public/status" });
+      codes.push(res.statusCode);
+    }
+
+    // Over-limit requests are 429, then a ban returns 403.
+    expect(codes).toContain(429);
+    expect(codes).toContain(403);
+
+    await app.close();
+    await upstream.close();
+  });
+
   it("exempts health checks from rate limiting", async () => {
     const app = await buildTestApp({ RATE_LIMIT_MAX: "2" });
 
