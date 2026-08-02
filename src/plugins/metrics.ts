@@ -37,9 +37,7 @@ export default fp(
 
     fastify.addHook("onResponse", async (req, reply) => {
       const labels = {
-        // Folded to a known set so arbitrary verbs cannot inflate cardinality.
         method: KNOWN_HTTP_METHODS.has(req.method) ? req.method : OTHER_METHOD_LABEL,
-        // Route pattern, never the raw URL, for the same reason.
         route: req.routeOptions.url ?? "unmatched",
         status: String(reply.statusCode),
       };

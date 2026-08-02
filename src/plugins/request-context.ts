@@ -39,15 +39,12 @@ export default fp(
       req.correlationId = correlationId;
       req.traceId = context.traceId;
 
-      // Incoming headers are forwarded verbatim by the proxy layer, so
-      // setting them here propagates the context to every upstream.
+      // Mutating req.headers here propagates the context to the upstream,
+      // which the proxy layer forwards verbatim.
       req.headers[Header.RequestId] = requestId;
       req.headers[Header.CorrelationId] = correlationId;
       req.headers[Header.Traceparent] = formatTraceparent(context);
 
-      // tracestate is vendor state keyed to the trace. Keep it only when the
-      // trace is continued and within the spec size bound; when a new trace
-      // is started any incoming tracestate is meaningless and is dropped.
       const incomingState = req.headers[Header.Tracestate];
       if (!(
         continued &&

@@ -30,14 +30,12 @@ import publicGateway from "@/services/public.gateway";
  * @returns The configured, not-yet-listening Fastify instance.
  */
 export async function buildApp() {
-  // Resolves req.ip from x-forwarded-for. Correct behind a trusted load
-  // balancer; set TRUST_PROXY=false when clients connect directly, or
-  // rate-limit keys and forwarded headers become spoofable.
   const trustProxy = envBoolean("TRUST_PROXY", true);
 
+  // These options configure the Fastify factory, so they read from raw env
+  // before @fastify/env runs; envNumber/envBoolean fail fast on bad values.
   const app = Fastify({
     logger: {
-      // Factory option: read from raw env, @fastify/env has not run yet.
       level: process.env.LOG_LEVEL ?? "info",
       redact: [
         `req.headers.${Header.Authorization}`,
@@ -45,8 +43,6 @@ export async function buildApp() {
         `req.headers.${Header.Cookie}`,
       ],
     },
-    // Factory option, same reason. Validated to fail fast (bodyLimit must be
-    // a positive integer).
     bodyLimit: envNumber("BODY_LIMIT", 1_048_576, 1),
     genReqId: (req) => {
       const incoming = req.headers[Header.RequestId];
@@ -54,20 +50,12 @@ export async function buildApp() {
         ? incoming
         : randomUUID();
     },
-    // Must exceed the idle timeout of the load balancer in front of the
-    // gateway so the balancer never reuses a connection the gateway closed.
     keepAliveTimeout: envNumber("KEEP_ALIVE_TIMEOUT_MS", 72_000),
-    // Bound the time a single request may take to arrive, so a slow client
-    // cannot hold a connection open indefinitely (tighter than Node's ~5min
-    // default). 0 disables it.
     requestTimeout: envNumber("REQUEST_TIMEOUT_MS", 30_000),
     trustProxy,
   });
 
-  // Flipped by server.ts on shutdown so readiness reports draining.
   app.decorate("shuttingDown", false);
-  // Read by the proxy layer to decide whether incoming x-forwarded-for is
-  // trustworthy history (append) or client-forged (replace).
   app.decorate("trustProxy", trustProxy);
 
   await app.register(env, { schema: configSchema, dotenv: true });

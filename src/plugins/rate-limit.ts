@@ -23,15 +23,12 @@ export default fp(
 
     if (redisUrl) {
       redis = new Redis(redisUrl, {
-        // Don't block boot on the connection; connect on first use.
         lazyConnect: true,
         connectTimeout: 500,
-        // Fail fast so a slow Redis doesn't stall requests.
         maxRetriesPerRequest: 1,
       });
 
-      // A listener is required so a connection error does not crash the
-      // process as an unhandled 'error' event.
+      // Required so a connection error is not thrown as an unhandled event.
       redis.on("error", (err) => {
         fastify.log.error({ err }, "rate-limit redis store error");
       });

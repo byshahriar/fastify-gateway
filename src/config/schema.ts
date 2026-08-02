@@ -39,7 +39,6 @@ export const configSchema = {
     // open — protect it with network policy in that case.
     METRICS_TOKEN: { type: "string", default: "" },
 
-    // Upstream connection pool and fail-fast timeouts.
     UPSTREAM_TIMEOUT_MS: { type: "number", default: 10000 },
     UPSTREAM_CONNECT_TIMEOUT_MS: { type: "number", default: 2000 },
     UPSTREAM_MAX_CONNECTIONS: { type: "number", default: 128 },

@@ -121,14 +121,11 @@ export abstract class ServiceGateway {
 
       const rewritten: typeof headers = {
         ...headers,
-        // Append only when the incoming chain is trusted; otherwise discard
-        // the client-forged value and record just the real peer.
         [Header.ForwardedFor]: trustProxy && forwarded ? `${forwarded}, ${peer}` : peer,
         [Header.ForwardedHost]: req.hostname,
         [Header.ForwardedProto]: req.protocol,
       };
 
-      // The gateway's own edge credentials never reach upstreams.
       delete rewritten[Header.ApiKey];
       if (this.consumesAuthorizationHeader()) delete rewritten[Header.Authorization];
       if (upstreamAuthorization) rewritten[Header.Authorization] = upstreamAuthorization;
