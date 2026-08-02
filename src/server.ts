@@ -1,4 +1,11 @@
+import { config as loadEnv } from "dotenv";
 import { envBoolean, envNumber } from "@/config/env";
+
+// Load .env into process.env first, before anything reads it — including the
+// Fastify factory options (logger, timeouts, trust proxy) consumed before
+// @fastify/env validates the schema. A missing .env is not an error; in
+// production configuration comes from the real environment.
+loadEnv({ quiet: true });
 
 // Grace period for draining in-flight requests before a forced exit, so a
 // hung upstream connection can never stall shutdown indefinitely. Validated

@@ -37,7 +37,8 @@ and this project adheres to
   store (`REDIS_URL`) shared across replicas, CORS allow-list, helmet
   security headers, credential redaction in logs
 - Schema-validated configuration with fail-fast boot and a schema-derived
-  config type
+  config type; `.env` loaded via dotenv at startup so factory options are
+  honored too
 - Prometheus metrics at `/metrics`: request counters and duration histograms
   labeled by method, route pattern, and status
 - Optional chat alerting to a single selected channel (`ALERT_CHANNEL`:

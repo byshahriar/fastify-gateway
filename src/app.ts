@@ -53,7 +53,10 @@ export async function buildApp() {
   app.decorate("shuttingDown", false);
   app.decorate("trustProxy", trustProxy);
 
-  await app.register(env, { schema: configSchema, dotenv: true });
+  // .env is loaded by the entry point (server.ts) before the factory runs, so
+  // @fastify/env only validates and type-coerces what is already in the
+  // environment.
+  await app.register(env, { schema: configSchema });
 
   await app.register(securityPlugin);
   await app.register(requestContextPlugin);

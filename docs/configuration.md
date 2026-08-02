@@ -1,7 +1,23 @@
 # Configuration
 
 All configuration is supplied through environment variables, either from the
-process environment or a `.env` file (`cp .env.example .env`).
+process environment or a `.env` file.
+
+## Loading `.env`
+
+Copy the template and edit it:
+
+```bash
+cp .env.example .env
+```
+
+The entry point (`server.ts`) loads `.env` into `process.env` with `dotenv`
+**before** anything reads it — so every variable is picked up, including the
+factory/process options (logging, timeouts, trust proxy, OpenTelemetry) that
+are consumed before schema validation runs. Real environment variables take
+precedence over `.env`, and a missing `.env` is not an error: in production,
+configuration comes from the platform. `.env` is git-ignored; never commit
+secrets — commit `.env.example` instead.
 
 ## How it works
 
