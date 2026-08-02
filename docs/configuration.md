@@ -66,9 +66,10 @@ allowing traffic — see [Authentication](authentication.md).
 | Variable | Default | Description |
 | --- | --- | --- |
 | `METRICS_TOKEN` | — | Bearer token required to scrape `GET /metrics`. Empty leaves the endpoint open — protect it with network policy in that case |
-| `ALERTS_ENABLED` | `false` | Feature flag for Slack/Discord alerts on 5xx responses |
-| `SLACK_WEBHOOK_URL` | — | Slack incoming-webhook URL for alerts |
-| `DISCORD_WEBHOOK_URL` | — | Discord webhook URL for alerts |
+| `ALERTS_ENABLED` | `false` | Feature flag for chat alerts on 5xx responses |
+| `ALERT_CHANNEL` | `none` | Active alert channel: `none`, `slack`, or `discord` |
+| `SLACK_WEBHOOK_URL` | — | Slack incoming-webhook URL (used when `ALERT_CHANNEL=slack`) |
+| `DISCORD_WEBHOOK_URL` | — | Discord webhook URL (used when `ALERT_CHANNEL=discord`) |
 | `ALERT_THROTTLE_MS` | `60000` | Minimum interval between alert notifications |
 | `OTEL_ENABLED` | `false` | Feature flag for OpenTelemetry tracing (process option) |
 | `OTEL_SERVICE_NAME` | `fastify-gateway` | Service name on emitted spans (process option) |

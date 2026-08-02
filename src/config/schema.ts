@@ -48,9 +48,10 @@ export const configSchema = {
     METRICS_TOKEN: { type: "string", default: "" },
 
     // Chat-channel alerting (feature flag). When enabled, a 5xx response
-    // triggers a throttled notification to any configured Slack/Discord
-    // webhook.
+    // triggers a throttled notification to the single active channel selected
+    // by ALERT_CHANNEL, using that channel's webhook URL.
     ALERTS_ENABLED: { type: "boolean", default: false },
+    ALERT_CHANNEL: { type: "string", enum: ["none", "slack", "discord"], default: "none" },
     SLACK_WEBHOOK_URL: { type: "string", default: "" },
     DISCORD_WEBHOOK_URL: { type: "string", default: "" },
     ALERT_THROTTLE_MS: { type: "number", default: 60000 },

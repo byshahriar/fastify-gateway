@@ -74,19 +74,18 @@ Deployment guidance lives in [Operations → Metrics](operations.md#metrics).
 
 ## Chat alerting
 
-Optional Slack and Discord notifications, off by default (feature flag
-`ALERTS_ENABLED`). When enabled with at least one webhook, a `5xx` response
-posts a message to every configured channel — Slack (`SLACK_WEBHOOK_URL`) and
-Discord (`DISCORD_WEBHOOK_URL`) — including the status, method, route pattern,
-and request id. Notifications are throttled to one per `ALERT_THROTTLE_MS`
-(default 60s) so a burst of errors cannot flood the channel, delivery runs
-after the response is sent and never affects the client, and a failing
-webhook is logged rather than raised.
+Optional chat notifications, off by default (feature flag `ALERTS_ENABLED`).
+One channel is active at a time, chosen by `ALERT_CHANNEL` (`slack`,
+`discord`, or `none`); the selected channel's webhook (`SLACK_WEBHOOK_URL` or
+`DISCORD_WEBHOOK_URL`) receives a message on every `5xx` response, including
+the status, method, route pattern, and request id. Notifications are throttled
+to one per `ALERT_THROTTLE_MS` (default 60s) so a burst of errors cannot flood
+the channel, delivery runs after the response is sent and never affects the
+client, and a failing webhook is logged rather than raised.
 
-Both channels are independent: configure either, both, or neither. This is a
-lightweight signal for humans; for full metric-based alerting, scrape
-`/metrics` with Prometheus (or export traces via OpenTelemetry, below) and
-alert there.
+This is a lightweight signal for humans; for full metric-based alerting,
+scrape `/metrics` with Prometheus (or export traces via OpenTelemetry, below)
+and alert there.
 
 ## OpenTelemetry
 

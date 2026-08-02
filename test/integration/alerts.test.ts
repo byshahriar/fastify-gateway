@@ -19,6 +19,7 @@ async function buildAlertingApp(overrides: Record<string, string> = {}) {
   discord = await startUpstream();
   app = await buildTestApp({
     ALERTS_ENABLED: "true",
+    ALERT_CHANNEL: "slack",
     SLACK_WEBHOOK_URL: slack.url,
     DISCORD_WEBHOOK_URL: discord.url,
     ALERT_THROTTLE_MS: "0",
@@ -29,34 +30,41 @@ async function buildAlertingApp(overrides: Record<string, string> = {}) {
 }
 
 describe("chat-channel alerting", () => {
-  it("notifies Slack and Discord on a 5xx with channel-specific payloads", async () => {
-    const gateway = await buildAlertingApp();
+  it("notifies only the selected channel on a 5xx", async () => {
+    const gateway = await buildAlertingApp({ ALERT_CHANNEL: "slack" });
 
     const res = await gateway.inject({ method: "GET", url: "/api/public/status" });
     expect(res.statusCode).toBe(502);
 
-    await vi.waitFor(() => {
-      expect(slack!.requests).toHaveLength(1);
-      expect(discord!.requests).toHaveLength(1);
-    });
-
+    await vi.waitFor(() => expect(slack!.requests).toHaveLength(1));
     expect(JSON.parse(slack!.requests[0].body)).toMatchObject({
       text: expect.stringContaining("502"),
     });
+
+    // The unselected channel is never contacted.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(discord!.requests).toHaveLength(0);
+  });
+
+  it("uses Discord when it is the selected channel", async () => {
+    const gateway = await buildAlertingApp({ ALERT_CHANNEL: "discord" });
+
+    await gateway.inject({ method: "GET", url: "/api/public/status" });
+
+    await vi.waitFor(() => expect(discord!.requests).toHaveLength(1));
     expect(JSON.parse(discord!.requests[0].body)).toMatchObject({
       content: expect.stringContaining("502"),
     });
+    expect(slack!.requests).toHaveLength(0);
   });
 
   it("does not notify on a successful response", async () => {
     const gateway = await buildAlertingApp();
 
     await gateway.inject({ method: "GET", url: "/healthz" });
-    // Give any (unexpected) delivery a chance to arrive.
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(slack!.requests).toHaveLength(0);
-    expect(discord!.requests).toHaveLength(0);
   });
 
   it("throttles rapid alerts to one per window", async () => {
@@ -72,9 +80,9 @@ describe("chat-channel alerting", () => {
   });
 
   it("tolerates a failing webhook without crashing", async () => {
-    slack = await startUpstream();
     app = await buildTestApp({
       ALERTS_ENABLED: "true",
+      ALERT_CHANNEL: "slack",
       SLACK_WEBHOOK_URL: "http://127.0.0.1:1/dead",
       ALERT_THROTTLE_MS: "0",
       PUBLIC_SERVICE_URL: await deadUpstreamUrl(),
@@ -87,9 +95,15 @@ describe("chat-channel alerting", () => {
     expect(still.statusCode).toBe(200);
   });
 
-  it("boots and no-ops when enabled without any webhook URL", async () => {
-    app = await buildTestApp({ ALERTS_ENABLED: "true" });
+  it("boots and no-ops when enabled with ALERT_CHANNEL=none", async () => {
+    app = await buildTestApp({ ALERTS_ENABLED: "true", ALERT_CHANNEL: "none" });
     const res = await app.inject({ method: "GET", url: "/healthz" });
     expect(res.statusCode).toBe(200);
+  });
+
+  it("refuses to start with an invalid ALERT_CHANNEL", async () => {
+    await expect(
+      buildTestApp({ ALERTS_ENABLED: "true", ALERT_CHANNEL: "telegram" }),
+    ).rejects.toThrow();
   });
 });

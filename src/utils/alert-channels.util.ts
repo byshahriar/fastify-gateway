@@ -1,3 +1,4 @@
+import { AlertChannelKind } from "@/enums";
 import type { AlertChannel } from "@/interfaces";
 
 /**
@@ -7,7 +8,7 @@ import type { AlertChannel } from "@/interfaces";
  * @returns The channel; Slack expects a `{ text }` payload.
  */
 export function slackChannel(url: string): AlertChannel {
-  return { name: "slack", url, format: (message) => ({ text: message }) };
+  return { name: AlertChannelKind.Slack, url, format: (message) => ({ text: message }) };
 }
 
 /**
@@ -17,21 +18,26 @@ export function slackChannel(url: string): AlertChannel {
  * @returns The channel; Discord expects a `{ content }` payload.
  */
 export function discordChannel(url: string): AlertChannel {
-  return { name: "discord", url, format: (message) => ({ content: message }) };
+  return { name: AlertChannelKind.Discord, url, format: (message) => ({ content: message }) };
 }
 
 /**
- * Builds the configured alert channels, skipping any without a URL.
+ * Resolves the single active alert channel from configuration.
  *
- * @param config - Slack and Discord webhook URLs (empty to disable).
- * @returns The enabled channels, in a stable order.
+ * @param config - The selected channel and the webhook URLs.
+ * @returns The chosen channel, or `null` when the selection is `none`,
+ *   unrecognized, or the selected channel has no webhook URL.
  */
-export function buildAlertChannels(config: {
+export function selectAlertChannel(config: {
+  channel: string;
   slackUrl: string;
   discordUrl: string;
-}): AlertChannel[] {
-  const channels: AlertChannel[] = [];
-  if (config.slackUrl) channels.push(slackChannel(config.slackUrl));
-  if (config.discordUrl) channels.push(discordChannel(config.discordUrl));
-  return channels;
+}): AlertChannel | null {
+  if (config.channel === AlertChannelKind.Slack) {
+    return config.slackUrl ? slackChannel(config.slackUrl) : null;
+  }
+  if (config.channel === AlertChannelKind.Discord) {
+    return config.discordUrl ? discordChannel(config.discordUrl) : null;
+  }
+  return null;
 }

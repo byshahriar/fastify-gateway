@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAlertChannels, discordChannel, slackChannel } from "@/utils";
+import { discordChannel, selectAlertChannel, slackChannel } from "@/utils";
 
 describe("alert channel builders", () => {
   it("formats Slack payloads as { text }", () => {
@@ -15,22 +15,31 @@ describe("alert channel builders", () => {
   });
 });
 
-describe("buildAlertChannels", () => {
-  it("returns no channels when both URLs are empty", () => {
-    expect(buildAlertChannels({ slackUrl: "", discordUrl: "" })).toEqual([]);
+describe("selectAlertChannel", () => {
+  const urls = { slackUrl: "https://s", discordUrl: "https://d" };
+
+  it("selects Slack when chosen and its URL is set", () => {
+    const channel = selectAlertChannel({ channel: "slack", ...urls });
+    expect(channel?.name).toBe("slack");
+    expect(channel?.url).toBe("https://s");
   });
 
-  it("returns only the configured channels", () => {
-    expect(
-      buildAlertChannels({ slackUrl: "https://s", discordUrl: "" }).map((c) => c.name),
-    ).toEqual(["slack"]);
-    expect(
-      buildAlertChannels({ slackUrl: "", discordUrl: "https://d" }).map((c) => c.name),
-    ).toEqual(["discord"]);
+  it("selects Discord when chosen and its URL is set", () => {
+    const channel = selectAlertChannel({ channel: "discord", ...urls });
+    expect(channel?.name).toBe("discord");
+    expect(channel?.url).toBe("https://d");
   });
 
-  it("returns both channels in a stable order", () => {
-    const channels = buildAlertChannels({ slackUrl: "https://s", discordUrl: "https://d" });
-    expect(channels.map((c) => c.name)).toEqual(["slack", "discord"]);
+  it("returns null for 'none'", () => {
+    expect(selectAlertChannel({ channel: "none", ...urls })).toBeNull();
+  });
+
+  it("returns null when the chosen channel has no URL", () => {
+    expect(
+      selectAlertChannel({ channel: "slack", slackUrl: "", discordUrl: "https://d" }),
+    ).toBeNull();
+    expect(
+      selectAlertChannel({ channel: "discord", slackUrl: "https://s", discordUrl: "" }),
+    ).toBeNull();
   });
 });

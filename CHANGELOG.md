@@ -37,8 +37,8 @@ and this project adheres to
   config type
 - Prometheus metrics at `/metrics`: request counters and duration histograms
   labeled by method, route pattern, and status
-- Optional Slack/Discord alerting on 5xx responses (feature flag
-  `ALERTS_ENABLED`)
+- Optional chat alerting on 5xx responses to a single selected channel
+  (`ALERT_CHANNEL`: slack or discord), behind the `ALERTS_ENABLED` flag
 - Optional OpenTelemetry tracing export (feature flag `OTEL_ENABLED`)
 - Readiness draining and bounded graceful shutdown for rolling deploys
 - Multi-stage Docker image and a Compose topology with demo upstreams
