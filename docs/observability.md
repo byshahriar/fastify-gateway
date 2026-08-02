@@ -80,8 +80,9 @@ One channel is active at a time, chosen by `ALERT_CHANNEL` (`slack`,
 `DISCORD_WEBHOOK_URL`) receives a message on every `5xx` response, including
 the status, method, route pattern, and request id. Notifications are throttled
 to one per `ALERT_THROTTLE_MS` (default 60s) so a burst of errors cannot flood
-the channel, delivery runs after the response is sent and never affects the
-client, and a failing webhook is logged rather than raised.
+the channel. Delivery is retried with exponential backoff (`ALERT_RETRIES`),
+runs after the response is sent so it never affects the client, and a webhook
+that fails every attempt is logged rather than raised.
 
 This is a lightweight signal for humans; for full metric-based alerting,
 scrape `/metrics` with Prometheus (or export traces via OpenTelemetry, below)

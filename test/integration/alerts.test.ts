@@ -1,3 +1,5 @@
+import { createServer, type Server } from "node:http";
+import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { buildTestApp } from "@test/helpers/app";
@@ -41,7 +43,6 @@ describe("chat-channel alerting", () => {
       text: expect.stringContaining("502"),
     });
 
-    // The unselected channel is never contacted.
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(discord!.requests).toHaveLength(0);
   });
@@ -85,6 +86,7 @@ describe("chat-channel alerting", () => {
       ALERT_CHANNEL: "slack",
       SLACK_WEBHOOK_URL: "http://127.0.0.1:1/dead",
       ALERT_THROTTLE_MS: "0",
+      ALERT_RETRIES: "0",
       PUBLIC_SERVICE_URL: await deadUpstreamUrl(),
     });
 
@@ -93,6 +95,36 @@ describe("chat-channel alerting", () => {
 
     const still = await app.inject({ method: "GET", url: "/healthz" });
     expect(still.statusCode).toBe(200);
+  });
+
+  it("retries delivery on a transient webhook failure", async () => {
+    let attempts = 0;
+    const flaky: Server = createServer((req, res) => {
+      attempts += 1;
+      req.resume();
+      req.on("end", () => {
+        res.writeHead(attempts === 1 ? 503 : 200).end("{}");
+      });
+    });
+    await new Promise<void>((resolve) => flaky.listen(0, "127.0.0.1", resolve));
+    const { port } = flaky.address() as AddressInfo;
+
+    try {
+      app = await buildTestApp({
+        ALERTS_ENABLED: "true",
+        ALERT_CHANNEL: "slack",
+        SLACK_WEBHOOK_URL: `http://127.0.0.1:${port}`,
+        ALERT_THROTTLE_MS: "0",
+        ALERT_RETRIES: "2",
+        PUBLIC_SERVICE_URL: await deadUpstreamUrl(),
+      });
+
+      await app.inject({ method: "GET", url: "/api/public/status" });
+      await vi.waitFor(() => expect(attempts).toBe(2), { timeout: 3000 });
+    } finally {
+      flaky.closeAllConnections();
+      await new Promise<void>((resolve) => flaky.close(() => resolve()));
+    }
   });
 
   it("boots and no-ops when enabled with ALERT_CHANNEL=none", async () => {

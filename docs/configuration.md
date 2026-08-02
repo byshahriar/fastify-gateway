@@ -71,6 +71,7 @@ allowing traffic — see [Authentication](authentication.md).
 | `SLACK_WEBHOOK_URL` | — | Slack incoming-webhook URL (used when `ALERT_CHANNEL=slack`) |
 | `DISCORD_WEBHOOK_URL` | — | Discord webhook URL (used when `ALERT_CHANNEL=discord`) |
 | `ALERT_THROTTLE_MS` | `60000` | Minimum interval between alert notifications |
+| `ALERT_RETRIES` | `2` | Retries (beyond the first attempt) for webhook delivery, with exponential backoff |
 | `OTEL_ENABLED` | `false` | Feature flag for OpenTelemetry tracing (process option) |
 | `OTEL_SERVICE_NAME` | `fastify-gateway` | Service name on emitted spans (process option) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | — | OTLP collector endpoint; read by the OTel SDK (process option) |

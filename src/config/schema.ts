@@ -55,6 +55,9 @@ export const configSchema = {
     SLACK_WEBHOOK_URL: { type: "string", default: "" },
     DISCORD_WEBHOOK_URL: { type: "string", default: "" },
     ALERT_THROTTLE_MS: { type: "number", default: 60000 },
+    // Retries (beyond the first attempt) for webhook delivery, with
+    // exponential backoff. 0 disables retrying.
+    ALERT_RETRIES: { type: "number", default: 2 },
 
     UPSTREAM_TIMEOUT_MS: { type: "number", default: 10000 },
     UPSTREAM_CONNECT_TIMEOUT_MS: { type: "number", default: 2000 },
