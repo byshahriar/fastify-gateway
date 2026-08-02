@@ -21,9 +21,8 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**/*.ts"],
       exclude: ["src/server.ts", "src/types/**"],
-      // "lcov" writes coverage/lcov.info for SonarQube and other tools;
-      // "text" keeps the terminal summary.
-      reporter: ["text", "lcov"],
+      // text: terminal summary; lcov: SonarQube; cobertura: GitLab coverage.
+      reporter: ["text", "lcov", "cobertura"],
       thresholds: {
         statements: 100,
         functions: 100,

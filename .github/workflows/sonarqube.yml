@@ -1,9 +1,10 @@
 name: SonarQube
 
+# Disabled for now: runs only when triggered manually from the Actions tab.
+# Re-enable automatic runs by restoring the push/pull_request triggers once a
+# SONAR_TOKEN (and SONAR_HOST_URL for self-hosted) secret is configured.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

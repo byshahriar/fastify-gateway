@@ -46,6 +46,8 @@ and this project adheres to
 - SonarQube scanner configuration and CI workflow; LCOV coverage output, plus
   an optional local SonarQube server via docker compose
 - Makefile and scripts/tasks.sh task runners wrapping the common commands
+- GitLab CI/CD pipeline mirroring the GitHub workflows (test matrix, Docker
+  build, tag release to the container registry, SAST and dependency scanning)
 - Test suite: unit, integration (real HTTP upstream stubs), and a live
   end-to-end suite that exercises the compiled build
 - Documentation set under `docs/` (getting started, architecture,
