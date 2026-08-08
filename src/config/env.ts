@@ -28,6 +28,23 @@ export function envNumber(name: string, fallback: number, min = 0): number {
 }
 
 /**
+ * Reads an environment variable constrained to a fixed set of values.
+ *
+ * @param name - Environment variable name.
+ * @param allowed - Accepted values.
+ * @param fallback - Value used when the variable is unset or empty.
+ * @returns The validated value.
+ * @throws Error When the value is present but not in `allowed`.
+ */
+export function envEnum<T extends string>(name: string, allowed: readonly T[], fallback: T): T {
+  const raw = process.env[name];
+  if (raw === undefined || raw === "") return fallback;
+
+  if ((allowed as readonly string[]).includes(raw)) return raw as T;
+  throw new Error(`Invalid ${name}: expected one of ${allowed.join(", ")}, got "${raw}"`);
+}
+
+/**
  * Reads a boolean environment variable accepting only `"true"` or `"false"`.
  *
  * @param name - Environment variable name.
