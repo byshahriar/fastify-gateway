@@ -46,11 +46,11 @@ export default fp(
       req.headers[Header.Traceparent] = formatTraceparent(context);
 
       const incomingState = req.headers[Header.Tracestate];
-      if (!(
+      const keepTracestate =
         continued &&
         typeof incomingState === "string" &&
-        incomingState.length <= MAX_TRACESTATE_LENGTH
-      )) {
+        incomingState.length <= MAX_TRACESTATE_LENGTH;
+      if (!keepTracestate) {
         delete req.headers[Header.Tracestate];
       }
 
