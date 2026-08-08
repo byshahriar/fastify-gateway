@@ -1,0 +1,37 @@
+import fp from "fastify-plugin";
+import fastifyRedis from "@fastify/redis";
+
+/**
+ * Registers the official `@fastify/redis` plugin when `REDIS_URL` is set,
+ * decorating `fastify.redis` with a managed ioredis client shared by the
+ * rate limiter and the response cache. An error listener is attached so a
+ * Redis outage is logged rather than crashing the process. The client is
+ * closed with the app; without `REDIS_URL` no client is created and the
+ * limiter uses its in-memory store. When `REDIS_URL` is set, Redis should be
+ * reachable at boot.
+ *
+ * The offline queue is disabled deliberately: with it on (the ioredis
+ * default), every command issued while Redis is disconnected queues in
+ * memory indefinitely — during an outage the queue grows unboundedly at the
+ * request rate and callers hang awaiting queued commands. Disabled, commands
+ * fail immediately while disconnected, letting each consumer fail open (the
+ * limiter via `skipOnError`, the cache via its catch-and-continue path).
+ */
+export default fp(
+  async (fastify) => {
+    if (!fastify.config.REDIS_URL) return;
+
+    await fastify.register(fastifyRedis, {
+      url: fastify.config.REDIS_URL,
+      closeClient: true,
+      maxRetriesPerRequest: null,
+      enableOfflineQueue: false,
+    });
+
+    // Without a listener an emitted 'error' would crash the process.
+    fastify.redis.on("error", (err) => {
+      fastify.log.error({ err }, "redis client error");
+    });
+  },
+  { name: "redis" },
+);

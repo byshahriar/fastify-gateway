@@ -1,6 +1,5 @@
 import fp from "fastify-plugin";
 import rateLimit from "@fastify/rate-limit";
-import { Redis } from "ioredis";
 
 /**
  * Per-client rate limiting keyed by IP. `req.ip` reflects the real client
@@ -11,32 +10,16 @@ import { Redis } from "ioredis";
  * escalating friction: after that many consecutive over-limit responses a
  * client IP is temporarily banned outright.
  *
- * Store selection: with `REDIS_URL` set, state is shared across replicas via
- * Redis; otherwise an in-memory store is used, which is correct only for a
- * single instance. On a Redis store error the limiter fails open (a Redis
- * outage never takes the gateway down).
+ * Store selection: with `REDIS_URL` set, the shared `fastify.redis` client
+ * (from the `redis` plugin) backs the limiter so state is shared across
+ * replicas; otherwise an in-memory store is used, correct only for a single
+ * instance. `skipOnError` makes the limiter fail open on store errors —
+ * combined with the client's disabled offline queue (see the redis plugin),
+ * a Redis outage means unthrottled traffic, never hung or failed requests.
  */
 export default fp(
   async (fastify) => {
-    const redisUrl = fastify.config.REDIS_URL;
-    let redis: Redis | undefined;
-
-    if (redisUrl) {
-      redis = new Redis(redisUrl, {
-        lazyConnect: true,
-        connectTimeout: 500,
-        maxRetriesPerRequest: 1,
-      });
-
-      // Required so a connection error is not thrown as an unhandled event.
-      redis.on("error", (err) => {
-        fastify.log.error({ err }, "rate-limit redis store error");
-      });
-
-      fastify.addHook("onClose", async () => {
-        redis?.disconnect();
-      });
-    }
+    const redis = fastify.config.REDIS_URL ? fastify.redis : undefined;
 
     await fastify.register(rateLimit, {
       max: fastify.config.RATE_LIMIT_MAX,
@@ -44,9 +27,10 @@ export default fp(
       ban: fastify.config.RATE_LIMIT_BAN > 0 ? fastify.config.RATE_LIMIT_BAN : undefined,
       keyGenerator: (req) => req.ip,
       redis,
+      skipOnError: true,
     });
 
     fastify.log.info({ store: redis ? "redis" : "in-memory" }, "rate limiting configured");
   },
-  { name: "rate-limit" },
+  { name: "rate-limit", dependencies: ["redis"] },
 );

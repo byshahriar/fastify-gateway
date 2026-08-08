@@ -1,59 +1,70 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
 
-// Track every Redis instance the plugin creates so the test can drive the
-// error listener and confirm the client is torn down.
-const created: Array<{ emit: (event: string, ...args: unknown[]) => boolean; status: string }> =
-  [];
-
-vi.mock("ioredis", async () => {
-  const mod = (await import("ioredis-mock")) as unknown as {
-    default: new (...a: unknown[]) => object;
+// Replace the official @fastify/redis plugin (not our code to test) with a
+// lightweight double that decorates `fastify.redis` with an in-memory
+// ioredis-mock client and closes it on shutdown — mirroring the real plugin's
+// observable behavior without a live Redis.
+vi.mock("@fastify/redis", async () => {
+  const fp = (await import("fastify-plugin")).default;
+  const RedisMock = (await import("ioredis-mock")).default;
+  return {
+    default: fp(
+      async (fastify, opts) => {
+        const client = new RedisMock();
+        fastify.decorate("redis", client as never);
+        // Recorded so tests can assert the client options our plugin passes.
+        fastify.decorate("redisPluginOptions", opts as never);
+        fastify.addHook("onClose", async () => {
+          await client.quit();
+        });
+      },
+      { name: "@fastify/redis" },
+    ),
   };
-  const RedisMock = mod.default;
-  class Tracked extends RedisMock {
-    constructor(...args: unknown[]) {
-      super(...args);
-      created.push(this as never);
-    }
-  }
-  return { Redis: Tracked, default: Tracked };
 });
 
-// Imported after the mock is registered (vi.mock is hoisted).
 const { buildTestApp } = await import("@test/helpers/app");
 
 describe("redis-backed rate limiting", () => {
   let app: FastifyInstance;
 
-  beforeAll(async () => {
-    created.length = 0;
+  afterEach(async () => {
+    await app.close().catch(() => {});
+  });
+
+  it("decorates a managed redis client and serves requests when REDIS_URL is set", async () => {
     app = await buildTestApp({ REDIS_URL: "redis://localhost:6379" });
-  });
-
-  afterAll(async () => {
-    await app.close();
-  });
-
-  it("selects the Redis store when REDIS_URL is set", () => {
-    expect(created).toHaveLength(1);
-  });
-
-  it("serves requests with the Redis store configured", async () => {
+    expect(app.redis).toBeDefined();
     const res = await app.inject({ method: "GET", url: "/healthz" });
     expect(res.statusCode).toBe(200);
   });
 
   it("handles a Redis store error without crashing", async () => {
-    // Emitting 'error' would crash the process if the plugin had no listener.
-    expect(() => created[0].emit("error", new Error("connection lost"))).not.toThrow();
-
+    app = await buildTestApp({ REDIS_URL: "redis://localhost:6379" });
+    // Without the plugin's error listener this would crash the process.
+    expect(() => app.redis.emit("error", new Error("connection lost"))).not.toThrow();
     const res = await app.inject({ method: "GET", url: "/healthz" });
     expect(res.statusCode).toBe(200);
   });
 
-  it("disconnects the client on shutdown", async () => {
+  it("closes the managed client on shutdown", async () => {
+    app = await buildTestApp({ REDIS_URL: "redis://localhost:6379" });
+    const client = app.redis;
     await app.close();
-    expect(created[0].status).not.toBe("ready");
+    expect(client.status).not.toBe("ready");
+  });
+
+  it("uses the in-memory store when REDIS_URL is unset", async () => {
+    app = await buildTestApp({ REDIS_URL: "" });
+    const res = await app.inject({ method: "GET", url: "/healthz" });
+    expect(res.statusCode).toBe(200);
+  });
+
+  it("disables the ioredis offline queue so an outage cannot queue commands unboundedly", async () => {
+    app = await buildTestApp({ REDIS_URL: "redis://localhost:6379" });
+    const opts = (app as unknown as { redisPluginOptions: Record<string, unknown> })
+      .redisPluginOptions;
+    expect(opts).toMatchObject({ enableOfflineQueue: false, maxRetriesPerRequest: null });
   });
 });
