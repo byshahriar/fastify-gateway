@@ -11,6 +11,10 @@ what is done, what is intentionally out of scope, and what may come next.
 - Edge auth: API key, HTTP Basic, JWT, and a pluggable strategy registry
 - Service-to-service (upstream) authentication
 - Rate limiting — per-IP, in-memory or shared via Redis, with optional ban
+- Load shedding — event-loop/memory pressure answered with 503 + Retry-After,
+  reported on readiness, with probes and /metrics exempt
+- Response caching — Cache-Control-aware, Redis-backed, per-service opt-in
+- IP allow/deny lists — CIDR-aware, evaluated against the real client IP
 - CORS, security headers, uniform error responses
 - Distributed tracing (W3C `traceparent`), correlation ids, structured logs
 - Prometheus metrics, health/readiness probes, bounded graceful shutdown
@@ -41,7 +45,6 @@ gateway and are **not** planned features. See
 These fit the gateway's scope but are not implemented, roughly in priority
 order. None are required for the current feature set to be useful.
 
-- **Response caching** — cache-control-aware caching for GET-heavy upstreams.
 - **OpenTelemetry span export** — emit spans directly when no mesh is present.
 - **Request/response validation** — enforce OpenAPI/JSON-schema at the edge.
 - **Per-consumer API keys and quotas** — API-management-style key registry.

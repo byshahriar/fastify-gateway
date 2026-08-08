@@ -46,11 +46,14 @@ timeout).
 | `PORT` | `8080` | Listen port |
 | `HOST` | `0.0.0.0` | Listen address |
 | `LOG_LEVEL` | `info` | Pino log level (factory option) |
-| `LOG_DESTINATION` | `console` | Log channel: `console` (stdout) or `file` (rotating file) (factory option) |
+| `LOG_DESTINATION` | `console` | Log channels, comma-separated: `console` (stdout), `file` (rotating file), or `console,file` for both. Unknown channels fail at boot (factory option) |
 | `LOG_FILE` | `logs/gateway.log` | Base path when `LOG_DESTINATION=file` (factory option) |
 | `LOG_ROTATION_FREQUENCY` | `daily` | Time-based rotation: `daily`, `hourly`, or a millisecond interval (factory option) |
 | `LOG_ROTATION_MAX_SIZE` | `10m` | Size-based rotation threshold, e.g. `10m` (factory option) |
 | `LOG_RETENTION_FILES` | `14` | Number of recent log files to retain; older ones are deleted automatically (factory option) |
+| `LOG_BUFFER_BYTES` | `0` | Buffered async stdout writes: batch log lines until this many bytes accumulate. `0` writes synchronously. Orderly shutdown flushes the buffer; a hard crash can lose the tail (factory option) |
+| `LOG_REQUEST_STYLE` | `fastify` | Per-request logging: `fastify` (built-in incoming + completed lines), `single` (one structured completion line per request — half the log volume), or `off` (no per-request lines; errors are still logged) (factory option) |
+| `SLOW_REQUEST_MS` | `0` | Log a warn-level line for any request slower than this many milliseconds; `0` disables |
 | `BODY_LIMIT` | `1048576` | Max body size in bytes for gateway-served routes; proxied bodies are streamed, not buffered (factory option) |
 | `TRUST_PROXY` | `true` | Resolve `req.ip` from `x-forwarded-for`. Set `false` when clients connect directly, or rate-limit keys become spoofable (factory option) |
 | `KEEP_ALIVE_TIMEOUT_MS` | `72000` | Server keep-alive timeout; keep it above the load balancer's idle timeout (factory option) |
@@ -100,6 +103,48 @@ allowing traffic — see [Authentication](authentication.md).
 | `OTEL_ENABLED` | `false` | Feature flag for OpenTelemetry tracing (process option) |
 | `OTEL_SERVICE_NAME` | `fastify-gateway` | Service name on emitted spans (process option) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | — | OTLP collector endpoint; read by the OTel SDK (process option) |
+
+### IP filtering
+
+Evaluated against the real client IP (see `TRUST_PROXY`). Entries are plain
+IPs or CIDR ranges, IPv4 and IPv6; an invalid entry prevents startup. Health
+probes are never filtered, so a misconfigured list cannot fail liveness.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `IP_ALLOW_LIST` | — | Comma-separated IPs/CIDRs. When non-empty, clients it does not match receive `403` |
+| `IP_DENY_LIST` | — | Comma-separated IPs/CIDRs blocked outright with `403`; wins over the allow list |
+
+### Load shedding
+
+While any configured threshold is exceeded, requests are answered
+`503` + `Retry-After` instead of queueing, `/readyz` reports
+`under-pressure` so orchestrators route traffic away, and health probes and
+`/metrics` keep responding. `0` disables an individual check.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `PRESSURE_MAX_EVENT_LOOP_DELAY_MS` | `1000` | Shed when the sampled event-loop delay exceeds this |
+| `PRESSURE_MAX_EVENT_LOOP_UTILIZATION` | `0.98` | Shed when event-loop utilization (0–1) exceeds this |
+| `PRESSURE_MAX_HEAP_USED_BYTES` | `0` | Shed when heap usage exceeds this; `0` disables |
+| `PRESSURE_MAX_RSS_BYTES` | `0` | Shed when RSS exceeds this; `0` disables |
+| `PRESSURE_SAMPLE_INTERVAL_MS` | `1000` | Sampling interval for the checks above |
+| `PRESSURE_RETRY_AFTER_SECONDS` | `10` | `Retry-After` value on shed responses |
+
+### Response caching
+
+Shared, `Cache-Control`-aware caching for services that opt in via
+`cacheable` (currently the public service). Requires `REDIS_URL` — enabling
+it without one fails at boot. Only unauthenticated `GET` 200-responses are
+cached; TTL follows the upstream's `s-maxage`/`max-age`. Hits carry
+`x-cache: HIT`. Redis errors and slow lookups fail open.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `CACHE_ENABLED` | `false` | Feature flag for response caching |
+| `CACHE_MAX_TTL_MS` | `60000` | Upper bound on any entry's TTL, regardless of upstream headers |
+| `CACHE_DEFAULT_TTL_MS` | `0` | TTL when the upstream sends no `Cache-Control`; `0` caches only what upstreams opt into |
+| `CACHE_MAX_BODY_BYTES` | `1048576` | Bodies larger than this are streamed through and not cached |
 
 ### Rate limiting
 
