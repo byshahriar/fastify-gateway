@@ -1,6 +1,11 @@
 import fp from "fastify-plugin";
 import { AuthScheme } from "@/enums";
-import { createApiKeyStrategy, createBasicAuthStrategy, createJwtStrategy } from "@/strategies";
+import {
+  createApiKeyStrategy,
+  createBasicAuthStrategy,
+  createBearerAuthStrategy,
+  createJwtStrategy,
+} from "@/strategies";
 import type { AuthStrategy } from "@/types";
 import { parseUserList } from "@/utils";
 
@@ -40,6 +45,14 @@ export default fp(
         jwksUri: fastify.config.JWT_JWKS_URI || undefined,
         issuer: fastify.config.JWT_ISSUER || undefined,
         audience: fastify.config.JWT_AUDIENCE || undefined,
+      }),
+    );
+    fastify.registerAuthStrategy(
+      AuthScheme.Bearer,
+      createBearerAuthStrategy({
+        introspectionUrl: fastify.config.BEARER_INTROSPECTION_URL,
+        introspectionToken: fastify.config.BEARER_INTROSPECTION_TOKEN || undefined,
+        cacheTtlMs: fastify.config.BEARER_CACHE_TTL_MS,
       }),
     );
   },

@@ -32,6 +32,15 @@ export const configSchema = {
     JWT_ISSUER: { type: "string", default: "" },
     JWT_AUDIENCE: { type: "string", default: "" },
 
+    // Bearer (`bearer` auth scheme): validate opaque tokens against your own
+    // auth service's introspection endpoint. BEARER_INTROSPECTION_TOKEN, if
+    // set, authenticates the gateway to that endpoint. BEARER_CACHE_TTL_MS
+    // caches active-token decisions for that many ms (0 disables caching);
+    // a revoked token stays accepted until its cached entry expires.
+    BEARER_INTROSPECTION_URL: { type: "string", default: "" },
+    BEARER_INTROSPECTION_TOKEN: { type: "string", default: "" },
+    BEARER_CACHE_TTL_MS: { type: "number", default: 0 },
+
     RATE_LIMIT_MAX: { type: "number", default: 100 },
     RATE_LIMIT_WINDOW_MS: { type: "number", default: 60000 },
 
