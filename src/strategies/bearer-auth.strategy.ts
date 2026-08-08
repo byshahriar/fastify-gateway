@@ -6,6 +6,12 @@ import { parseBearerToken, sendMisconfigured, sendUnauthorized } from "@/utils";
 // Bound the introspection call so a slow auth service cannot stall requests.
 const INTROSPECTION_TIMEOUT_MS = 2000;
 
+// Default cap on cached token decisions (~100 bytes each, so ~1 MB at the
+// cap). Without a cap, rotating tokens leak: an expired entry is otherwise
+// evicted only when its exact token is presented again, which rotated-away
+// tokens never are.
+const DEFAULT_CACHE_MAX_ENTRIES = 10_000;
+
 /**
  * Options for the bearer auth strategy.
  */
@@ -26,6 +32,11 @@ export interface BearerAuthOptions {
    * cached entry expires, so keep it short.
    */
   cacheTtlMs?: number;
+  /**
+   * Maximum number of cached decisions held at once. At capacity, expired
+   * entries are swept first; if still full, the oldest entries are evicted.
+   */
+  cacheMaxEntries?: number;
 }
 
 /**
@@ -47,7 +58,12 @@ export interface BearerAuthOptions {
  * @returns The request guard.
  */
 export function createBearerAuthStrategy(options: BearerAuthOptions): AuthStrategy {
-  const { introspectionUrl, introspectionToken, cacheTtlMs = 0 } = options;
+  const {
+    introspectionUrl,
+    introspectionToken,
+    cacheTtlMs = 0,
+    cacheMaxEntries = DEFAULT_CACHE_MAX_ENTRIES,
+  } = options;
 
   // Request headers are fixed per strategy; build them once, not per request.
   const headers: Record<string, string> = { "content-type": "application/json" };
@@ -55,9 +71,28 @@ export function createBearerAuthStrategy(options: BearerAuthOptions): AuthStrate
 
   // Cache of active-token decisions keyed by a hash of the token (never the raw
   // token), holding the epoch-ms at which the decision expires. Only active
-  // decisions are cached, so the map is bounded by the live-token count and an
-  // invalid-token flood cannot grow it.
+  // decisions are cached (an invalid-token flood cannot grow the map), and the
+  // size is capped by `cacheMaxEntries` so rotated-away tokens cannot
+  // accumulate — see {@link evictForInsert}.
   const cache = cacheTtlMs > 0 ? new Map<string, number>() : undefined;
+
+  /**
+   * Makes room for one more entry when the cache is at capacity: sweeps
+   * expired entries first and, if every entry is still live, evicts the
+   * oldest insertions (`Map` preserves insertion order).
+   */
+  function evictForInsert(entries: Map<string, number>) {
+    if (entries.size < cacheMaxEntries) return;
+
+    const now = Date.now();
+    for (const [key, expiresAt] of entries) {
+      if (expiresAt <= now) entries.delete(key);
+    }
+    for (const key of entries.keys()) {
+      if (entries.size < cacheMaxEntries) break;
+      entries.delete(key);
+    }
+  }
 
   return async (req, reply) => {
     if (!introspectionUrl) {
@@ -98,6 +133,9 @@ export function createBearerAuthStrategy(options: BearerAuthOptions): AuthStrate
     }
 
     if (!active) return sendUnauthorized(req, reply);
-    if (cache) cache.set(cacheKey, Date.now() + cacheTtlMs);
+    if (cache) {
+      evictForInsert(cache);
+      cache.set(cacheKey, Date.now() + cacheTtlMs);
+    }
   };
 }

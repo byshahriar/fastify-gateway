@@ -2,6 +2,10 @@ import fp from "fastify-plugin";
 import pRetry from "p-retry";
 import { alertThreshold, selectAlertChannel, severityForStatus } from "@/utils";
 
+// Bound each webhook attempt so an endpoint that accepts the connection but
+// never responds cannot hold a delivery promise open for minutes.
+const WEBHOOK_TIMEOUT_MS = 5000;
+
 /**
  * Chat-channel alerting plugin (feature flag: `ALERTS_ENABLED`). When enabled
  * with `ALERT_CHANNEL` set to a configured channel, a response at or above the
@@ -41,6 +45,7 @@ export default fp(
             method: "POST",
             headers: { "content-type": "application/json" },
             body,
+            signal: AbortSignal.timeout(WEBHOOK_TIMEOUT_MS),
           });
           // fetch does not reject on HTTP errors; throw so p-retry retries.
           if (!res.ok) throw new Error(`webhook responded ${res.status}`);
@@ -62,14 +67,14 @@ export default fp(
       const route = req.routeOptions.url ?? req.url;
       const message = `${icon} fastify-gateway [${severity}]: ${reply.statusCode} on ${req.method} ${route} (requestId ${req.id})`;
 
-      try {
-        await deliver(message);
-      } catch (err) {
+      // Fire-and-forget: delivery (with retries and backoff) must never hold
+      // the request lifecycle open.
+      void deliver(message).catch((err) => {
         fastify.log.error(
           { err, channel: channel.name },
           "alert delivery failed after retries",
         );
-      }
+      });
     });
 
     fastify.log.info(
