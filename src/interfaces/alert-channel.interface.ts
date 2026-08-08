@@ -1,8 +1,14 @@
-/** A chat channel an alert notification can be delivered to. */
+/**
+ * A chat channel an alert notification can be delivered to.
+ */
 export interface AlertChannel {
-  /** Channel identifier used in logs, e.g. `"slack"`. */
+  /**
+   * Channel identifier used in logs, e.g. `"slack"`.
+   */
   name: string;
-  /** Incoming webhook URL. */
+  /**
+   * Incoming webhook URL.
+   */
   url: string;
   /**
    * Builds the channel-specific request body for a message.

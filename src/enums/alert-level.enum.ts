@@ -7,5 +7,7 @@ export const AlertLevel = {
   Warn: "warn",
 } as const;
 
-/** Union of the {@link AlertLevel} values. */
+/**
+ * Union of the {@link AlertLevel} values.
+ */
 export type AlertLevel = (typeof AlertLevel)[keyof typeof AlertLevel];

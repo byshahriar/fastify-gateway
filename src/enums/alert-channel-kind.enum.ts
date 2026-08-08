@@ -8,5 +8,7 @@ export const AlertChannelKind = {
   Discord: "discord",
 } as const;
 
-/** Union of the {@link AlertChannelKind} values. */
+/**
+ * Union of the {@link AlertChannelKind} values.
+ */
 export type AlertChannelKind = (typeof AlertChannelKind)[keyof typeof AlertChannelKind];

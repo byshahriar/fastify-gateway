@@ -3,15 +3,25 @@ import { Header } from "@/constants";
 import type { AuthStrategy } from "@/types";
 import { parseBearerToken, sendMisconfigured, sendUnauthorized } from "@/utils";
 
-/** Verification settings for the JWT auth scheme. */
+/**
+ * Verification settings for the JWT auth scheme.
+ */
 export interface JwtOptions {
-  /** Shared HMAC secret (HS256). Mutually exclusive with {@link jwksUri}. */
+  /**
+   * Shared HMAC secret (HS256). Mutually exclusive with {@link jwksUri}.
+   */
   secret?: string;
-  /** Remote JWKS endpoint for asymmetric keys (RS256/ES256). */
+  /**
+   * Remote JWKS endpoint for asymmetric keys (RS256/ES256).
+   */
   jwksUri?: string;
-  /** Required `iss` claim, if set. */
+  /**
+   * Required `iss` claim, if set.
+   */
   issuer?: string;
-  /** Required `aud` claim, if set. */
+  /**
+   * Required `aud` claim, if set.
+   */
   audience?: string;
 }
 
