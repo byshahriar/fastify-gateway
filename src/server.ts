@@ -1,5 +1,6 @@
 import { config as loadEnv } from "dotenv";
 import { envBoolean, envNumber } from "@/config/env";
+import { flushLogDestinations } from "@/config/logger";
 
 // Load .env into process.env first, before anything reads it — including the
 // Fastify factory options (logger, timeouts, trust proxy) consumed before
@@ -34,6 +35,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 
     const deadline = setTimeout(() => {
       app.log.error("shutdown deadline exceeded, exiting");
+      flushLogDestinations();
       process.exit(1);
     }, SHUTDOWN_TIMEOUT_MS);
     deadline.unref();
@@ -41,9 +43,11 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     try {
       await app.close();
       if (otelShutdown) await otelShutdown();
+      flushLogDestinations();
       process.exit(0);
     } catch (err) {
       app.log.error(err, "error during shutdown");
+      flushLogDestinations();
       process.exit(1);
     }
   });
@@ -53,5 +57,6 @@ try {
   await app.listen({ port: app.config.PORT, host: app.config.HOST });
 } catch (err) {
   app.log.error(err);
+  flushLogDestinations();
   process.exit(1);
 }
