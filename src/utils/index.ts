@@ -4,6 +4,7 @@ export { encodeBasicAuth, parseBasicAuthHeader, parseUserList } from "@/utils/ba
 export { parseBearerToken } from "@/utils/bearer.util";
 export { safeEqual } from "@/utils/crypto.util";
 export { errorBody } from "@/utils/error.util";
+export { buildIpList, normalizeIp } from "@/utils/ip-list.util";
 export { sendMisconfigured, sendUnauthorized } from "@/utils/reply.util";
 export {
   formatTraceparent,
