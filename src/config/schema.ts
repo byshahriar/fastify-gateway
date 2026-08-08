@@ -41,6 +41,39 @@ export const configSchema = {
     BEARER_INTROSPECTION_TOKEN: { type: "string", default: "" },
     BEARER_CACHE_TTL_MS: { type: "number", default: 0 },
 
+    // Log a warn-level line for any request slower than this many
+    // milliseconds. 0 disables. See plugins/logging.ts.
+    SLOW_REQUEST_MS: { type: "number", default: 0 },
+
+    // IP filtering, evaluated against the real client IP (see TRUST_PROXY).
+    // Comma-separated IPs or CIDR ranges, IPv4 and IPv6. A non-empty allow
+    // list blocks every client it does not match; the deny list blocks its
+    // matches outright and wins over the allow list. Empty disables a list.
+    IP_ALLOW_LIST: { type: "string", default: "" },
+    IP_DENY_LIST: { type: "string", default: "" },
+
+    // Load shedding. Requests arriving while the event loop or memory is over
+    // these thresholds are answered 503 + Retry-After instead of queueing
+    // behind work the instance cannot absorb. A value of 0 disables that
+    // individual check. Health probes and /metrics are exempt.
+    PRESSURE_MAX_EVENT_LOOP_DELAY_MS: { type: "number", default: 1000 },
+    PRESSURE_MAX_EVENT_LOOP_UTILIZATION: { type: "number", default: 0.98 },
+    PRESSURE_MAX_HEAP_USED_BYTES: { type: "number", default: 0 },
+    PRESSURE_MAX_RSS_BYTES: { type: "number", default: 0 },
+    PRESSURE_SAMPLE_INTERVAL_MS: { type: "number", default: 1000 },
+    PRESSURE_RETRY_AFTER_SECONDS: { type: "number", default: 10 },
+
+    // Response caching (feature flag) for services that opt in via
+    // `cacheable`. Requires REDIS_URL so entries are shared across replicas.
+    // TTL comes from the upstream's Cache-Control (s-maxage/max-age), capped
+    // by CACHE_MAX_TTL_MS; CACHE_DEFAULT_TTL_MS applies when the upstream
+    // sends no Cache-Control (0 = cache only when the upstream opts in).
+    // Bodies over CACHE_MAX_BODY_BYTES are never cached.
+    CACHE_ENABLED: { type: "boolean", default: false },
+    CACHE_MAX_TTL_MS: { type: "number", default: 60000 },
+    CACHE_DEFAULT_TTL_MS: { type: "number", default: 0 },
+    CACHE_MAX_BODY_BYTES: { type: "number", default: 1048576 },
+
     RATE_LIMIT_MAX: { type: "number", default: 100 },
     RATE_LIMIT_WINDOW_MS: { type: "number", default: 60000 },
 

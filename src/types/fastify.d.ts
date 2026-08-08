@@ -1,6 +1,7 @@
 import "fastify";
 import type { Registry } from "prom-client";
 import type { AuthScheme } from "@/enums";
+import type { GatewayCache } from "@/interfaces";
 import type { AuthStrategy } from "@/types/auth-strategy.type";
 import type { GatewayConfig } from "@/types/gateway-config.type";
 
@@ -39,6 +40,24 @@ declare module "fastify" {
      * Resolves the guard for a scheme; `undefined` when none is registered.
      */
     authStrategy(scheme: AuthScheme): AuthStrategy | undefined;
+    /**
+     * Response-cache hook factories, from `plugins/cache.ts`. Absent when
+     * `CACHE_ENABLED` is false.
+     */
+    gatewayCache: GatewayCache | undefined;
+  }
+
+  interface FastifyContextConfig {
+    /**
+     * Set to `false` to exempt a route from load shedding (health probes,
+     * /metrics). See `plugins/pressure.ts`.
+     */
+    shed?: boolean;
+    /**
+     * Set to `false` to exempt a route from IP filtering (health probes).
+     * See `plugins/ip-filter.ts`.
+     */
+    ipFilter?: boolean;
   }
 
   interface FastifyRequest {
@@ -50,5 +69,11 @@ declare module "fastify" {
      * W3C trace id this request participates in.
      */
     traceId: string;
+    /**
+     * Response-cache key when this request is cache-eligible, set by the
+     * cache plugin's serve hook and consumed by its store hook. Empty when
+     * the request must not be stored (ineligible, or already a hit).
+     */
+    cacheKey: string;
   }
 }
