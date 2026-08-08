@@ -2,8 +2,9 @@ import type { FastifyPluginAsync } from "fastify";
 import { ErrorMessage, Header, HttpStatus } from "@/constants";
 import { errorBody, parseBearerToken, safeEqual } from "@/utils";
 
-// Exempts the route from rate limiting so scrapes never consume a budget.
-const noRateLimit = { config: { rateLimit: false } };
+// Exempt from rate limiting so scrapes never consume a budget, and from load
+// shedding so operators keep metrics during the incidents that need them most.
+const noRateLimit = { config: { rateLimit: false, shed: false } };
 
 /**
  * Prometheus scrape endpoint. Serves the per-instance registry maintained by

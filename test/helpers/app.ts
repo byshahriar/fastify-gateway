@@ -5,6 +5,10 @@ const BASE_ENV: Record<string, string> = {
   GATEWAY_API_KEY: "test-api-key",
   BASIC_AUTH_USERS: "admin:admin-secret",
   LOG_LEVEL: "silent",
+  // Disable event-loop shedding by default: a busy CI worker could trip the
+  // production thresholds mid-suite. Pressure tests opt back in explicitly.
+  PRESSURE_MAX_EVENT_LOOP_DELAY_MS: "0",
+  PRESSURE_MAX_EVENT_LOOP_UTILIZATION: "0",
 };
 
 /**
