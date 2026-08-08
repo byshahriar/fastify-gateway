@@ -43,6 +43,15 @@ export abstract class ServiceGateway {
   protected readonly rewritePrefix: string = "/";
 
   /**
+   * Whether GET responses from this service participate in the shared
+   * response cache (active only when `CACHE_ENABLED` is set; see
+   * `plugins/cache.ts` for the caching rules). Restricted to services with
+   * no edge auth: a shared cache in front of an authenticated service would
+   * serve one client's responses to another.
+   */
+  protected readonly cacheable: boolean = false;
+
+  /**
    * Resolves this service's upstream base URL.
    *
    * @param config - Validated gateway configuration.
@@ -155,6 +164,23 @@ export abstract class ServiceGateway {
         );
       }
 
+      let cached = false;
+      if (this.cacheable) {
+        if (this.auth !== AuthScheme.None) {
+          throw new Error(
+            `Service "${this.name}" cannot combine caching with edge auth "${this.auth}"; ` +
+              "the shared cache would serve authenticated responses across clients",
+          );
+        }
+        // Hooks added in this encapsulated scope, before the proxy routes
+        // register, apply only to this service.
+        if (fastify.gatewayCache) {
+          fastify.addHook("onRequest", fastify.gatewayCache.serveHook(this.name));
+          fastify.addHook("onSend", fastify.gatewayCache.storeHook(this.name));
+          cached = true;
+        }
+      }
+
       await fastify.register(httpProxy, {
         prefix: this.prefix,
         upstream: target,
@@ -179,6 +205,7 @@ export abstract class ServiceGateway {
           prefix: this.prefix,
           upstream: redactUrlCredentials(target),
           auth: this.auth,
+          cached,
         },
         "service route registered",
       );
