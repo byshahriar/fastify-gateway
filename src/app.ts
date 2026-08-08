@@ -1,14 +1,19 @@
-import Fastify from "fastify";
+import Fastify, { LogController } from "fastify";
 import env from "@fastify/env";
 import { randomUUID } from "node:crypto";
 import { configSchema } from "@/config/schema";
-import { envBoolean, envNumber } from "@/config/env";
+import { envBoolean, envEnum, envNumber } from "@/config/env";
 import { buildLoggerOptions } from "@/config/logger";
 import { Header, SAFE_HEADER_ID_PATTERN } from "@/constants";
 import securityPlugin from "@/plugins/security";
 import requestContextPlugin from "@/plugins/request-context";
+import loggingPlugin, { REQUEST_LOG_STYLES } from "@/plugins/logging";
+import ipFilterPlugin from "@/plugins/ip-filter";
+import pressurePlugin from "@/plugins/pressure";
 import authPlugin from "@/plugins/auth";
+import redisPlugin from "@/plugins/redis";
 import rateLimitPlugin from "@/plugins/rate-limit";
+import cachePlugin from "@/plugins/cache";
 import errorHandlerPlugin from "@/plugins/error-handler";
 import metricsPlugin from "@/plugins/metrics";
 import alertsPlugin from "@/plugins/alerts";
@@ -33,11 +38,17 @@ import publicGateway from "@/services/public.gateway";
  */
 export async function buildApp() {
   const trustProxy = envBoolean("TRUST_PROXY", true);
+  const requestLogStyle = envEnum("LOG_REQUEST_STYLE", REQUEST_LOG_STYLES, "fastify");
 
   // These options configure the Fastify factory, so they read from raw env
   // before @fastify/env runs; envNumber/envBoolean fail fast on bad values.
   const app = Fastify({
-    logger: buildLoggerOptions(),
+    logger: await buildLoggerOptions(),
+    // "single" and "off" replace Fastify's built-in two-line request
+    // logging; the logging plugin emits the replacement line for "single".
+    logController: new LogController({
+      disableRequestLogging: requestLogStyle !== "fastify",
+    }),
     bodyLimit: envNumber("BODY_LIMIT", 1_048_576, 1),
     genReqId: (req) => {
       const incoming = req.headers[Header.RequestId];
@@ -60,8 +71,17 @@ export async function buildApp() {
 
   await app.register(securityPlugin);
   await app.register(requestContextPlugin);
+  // After request-context so completion lines carry correlation ids.
+  await app.register(loggingPlugin);
+  // Filtering and shedding sit after request-context so their rejections
+  // carry correlation ids, and before auth/rate-limit so blocked or
+  // overloaded traffic is rejected on the cheapest path.
+  await app.register(ipFilterPlugin);
+  await app.register(pressurePlugin);
   await app.register(authPlugin);
+  await app.register(redisPlugin);
   await app.register(rateLimitPlugin);
+  await app.register(cachePlugin);
   await app.register(errorHandlerPlugin);
   await app.register(metricsPlugin);
   await app.register(alertsPlugin);
