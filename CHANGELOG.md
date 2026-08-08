@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Load shedding (`@fastify/under-pressure`): requests arriving over the
+  configured event-loop or memory thresholds are answered `503` with
+  `Retry-After`, readiness reports `under-pressure`, and health probes and
+  `/metrics` are exempt
+- Response caching (feature flag `CACHE_ENABLED`): shared,
+  `Cache-Control`-aware Redis-backed caching for services that opt in via
+  `cacheable`, with conservative shared-cache semantics and fail-open Redis
+  handling
+- IP filtering (`IP_ALLOW_LIST`/`IP_DENY_LIST`): CIDR-aware allow/deny lists
+  (IPv4 and IPv6) evaluated against the real client IP; health probes are
+  never filtered
+- Shared Redis plugin decorating a managed client used by rate limiting and
+  response caching
+- Multi-channel logging (`LOG_DESTINATION=console,file`), buffered async
+  stdout writes (`LOG_BUFFER_BYTES`), and log-destination flushing on
+  shutdown and app close
+- Logging plugin: single-line per-request logging (`LOG_REQUEST_STYLE`) and
+  slow-request warnings (`SLOW_REQUEST_MS`)
+- Response schemas on health probes for compiled serialization
+
+### Fixed
+
+- A Redis outage no longer hangs requests or queues commands unboundedly:
+  the client's offline queue is disabled and the rate limiter fails open
+  (`skipOnError`)
+- The bearer introspection cache is bounded (10,000 entries by default), so
+  rotating tokens can no longer grow it indefinitely
+- Alert webhook delivery is bounded by a 5-second timeout per attempt and no
+  longer holds the request lifecycle open during retries
+- The response cache retains streamed body chunks instead of copying them,
+  halving transient memory per cached response
+
 ## [1.0.0] - 2026-08-13
 
 ### Security

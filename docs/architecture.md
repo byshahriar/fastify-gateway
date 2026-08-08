@@ -54,8 +54,13 @@ src/
 ├── plugins/                   cross-cutting concerns, applied app-wide
 │   ├── security.ts            helmet + CORS
 │   ├── request-context.ts     correlation ids + trace propagation
+│   ├── logging.ts             hook-based logging: flush on close, request lines, slow warns
+│   ├── ip-filter.ts           IP allow/deny lists (CIDR-aware)
+│   ├── pressure.ts            load shedding via @fastify/under-pressure
 │   ├── auth.ts                the auth strategy registry
+│   ├── redis.ts               shared managed Redis client (feature-flagged)
 │   ├── rate-limit.ts          per-IP limiter (in-memory or Redis)
+│   ├── cache.ts               response caching for opted-in services (feature-flagged)
 │   ├── error-handler.ts       uniform error and 404 responses
 │   ├── metrics.ts             Prometheus metrics collection
 │   └── alerts.ts              Slack/Discord alerting (feature-flagged)

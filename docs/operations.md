@@ -18,6 +18,8 @@ Every error response has the same body:
 | `500 Internal gateway error` | Unexpected failure | Details logged, never sent to clients |
 | `500 Gateway misconfigured` | Auth scheme enabled but not configured | See [Authentication](authentication.md) |
 | `429` | Rate limit exceeded | Per-IP budget exhausted |
+| `503 Gateway overloaded` | Load shed | Event-loop or memory pressure over threshold; carries `Retry-After` |
+| `403 Forbidden` | IP filtered | Client blocked by `IP_ALLOW_LIST`/`IP_DENY_LIST` |
 | `404 Not found` | No route matched | Uniform shape, includes request id |
 | Other `4xx` | Client error | Original message passed through |
 
@@ -66,9 +68,28 @@ never exhaust a budget.
 
 The in-memory store is correct for a single instance. When running replicas,
 set `REDIS_URL` to a shared Redis so the limit applies across all of them —
-nothing else changes, the gateway is otherwise stateless. On a Redis store
-error the limiter fails open, so a Redis outage never takes the gateway
-down.
+nothing else changes, the gateway is otherwise stateless. The client's
+offline queue is disabled and the limiter is configured to skip on store
+errors, so during a Redis outage commands fail immediately and the limiter
+fails open — unthrottled traffic, never hung requests or queued commands
+growing in memory.
+
+## Load shedding
+
+While the sampled event loop or memory exceeds the `PRESSURE_*` thresholds,
+requests are answered `503 Gateway overloaded` with a `Retry-After` header
+instead of queueing, and `/readyz` reports `under-pressure` so orchestrators
+route traffic away. Health probes and `/metrics` are exempt: an overload can
+never fail liveness into a restart loop, and metrics stay available during
+the incidents that need them most. See
+[Configuration](configuration.md#load-shedding) for the thresholds.
+
+## Response caching and IP filtering
+
+Both are opt-in; see [Configuration](configuration.md#response-caching) and
+[Configuration](configuration.md#ip-filtering). Caching requires `REDIS_URL`
+and fails open on Redis errors; IP filtering never applies to health probes,
+so a misconfigured list cannot fail liveness.
 
 ## Deployment topology
 
@@ -89,8 +110,9 @@ down.
   `SHUTDOWN_TIMEOUT_MS` (default 10 s); a hung upstream connection can never
   stall shutdown past the deadline.
 - **Health probes** — `/healthz` (liveness) and `/readyz` (readiness), both
-  auth-free and rate-limit-exempt. Readiness returns `503 draining` once
-  shutdown begins.
+  auth-free and exempt from rate limiting, load shedding, and IP filtering.
+  Readiness returns `503 draining` once shutdown begins and
+  `503 under-pressure` while the instance is shedding load.
 
 ## Metrics
 

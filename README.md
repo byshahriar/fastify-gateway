@@ -23,13 +23,21 @@ context on every hop — all in a single small deployable.
   request, with optional OpenTelemetry span export
 - **Rate limiting** — per-IP, in-memory or shared across replicas via Redis,
   with an optional escalating ban
-- **Observability** — Prometheus metrics, structured logs, and optional
-  Slack/Discord alerting on errors
+- **Load shedding** — event-loop and memory pressure answered with
+  `503` + `Retry-After` and reported on readiness; probes and metrics stay
+  responsive
+- **Response caching** — optional `Cache-Control`-aware caching for opted-in
+  services, shared across replicas via Redis
+- **IP filtering** — allow/deny lists with CIDR support, evaluated against
+  the real client IP
+- **Observability** — Prometheus metrics, structured multi-channel logs with
+  optional single-line request logging and slow-request warnings, and
+  optional Slack/Discord alerting on errors
 - **Production posture** — schema-validated config that fails fast at boot,
   security headers, uniform error responses that never leak internals, bounded
   timeouts, and graceful shutdown with readiness draining
-- **Feature-flagged extras** — Redis, alerting, and OpenTelemetry are all
-  opt-in and off by default, so nothing loads unless you enable it
+- **Feature-flagged extras** — Redis, caching, alerting, and OpenTelemetry
+  are all opt-in and off by default, so nothing loads unless you enable it
 - **Typed end to end** — strict TypeScript, with the config type derived from
   the validation schema itself
 

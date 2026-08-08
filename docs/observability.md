@@ -38,7 +38,9 @@ format: ISO-8601 timestamps and string level labels (`info`, `warn`, `error`).
 
 ### Channels
 
-`LOG_DESTINATION` selects where logs go:
+`LOG_DESTINATION` selects where logs go — a single channel or a
+comma-separated combination (`console,file` logs to both at once, in the
+same format):
 
 - **`console`** (default) — line-delimited JSON to stdout. Correct for
   containers, where the platform (Docker/Kubernetes) handles rotation and
@@ -47,6 +49,27 @@ format: ISO-8601 timestamps and string level labels (`info`, `warn`, `error`).
   (`LOG_ROTATION_MAX_SIZE`) or interval (`LOG_ROTATION_FREQUENCY`), and old
   files are pruned automatically to keep the most recent `LOG_RETENTION_FILES`.
   Use this for VM or bare-metal deployments without a log shipper.
+
+`LOG_BUFFER_BYTES` (default 0) batches stdout writes asynchronously until
+that many bytes accumulate — a throughput lever at high request rates.
+Orderly shutdown flushes the buffer (the logging plugin also flushes on
+`close`); a hard crash can lose the buffered tail.
+
+### Request logging
+
+`LOG_REQUEST_STYLE` selects the per-request logging style:
+
+- **`fastify`** (default) — Fastify's built-in two lines per request
+  (incoming + completed).
+- **`single`** — one structured completion line per request with `method`,
+  `url`, matched `route`, `statusCode`, `elapsedMs`, and `ip` — half the log
+  volume at gateway request rates.
+- **`off`** — no per-request lines; errors are still logged by the error
+  handler.
+
+`SLOW_REQUEST_MS` (default 0 = off) additionally logs a warn-level
+`slow request` line for any request exceeding the threshold — cheap
+latency-outlier visibility without tracing.
 
 ### Fields
 
