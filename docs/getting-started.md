@@ -42,15 +42,8 @@ mistakes surface immediately rather than at request time.
 npm run start:dev      # watch mode — restarts on file changes
 ```
 
-For other modes:
-
-| Command | Mode |
-| --- | --- |
-| `npm run start` | Run once from source |
-| `npm run start:dev` | Watch mode |
-| `npm run start:debug` | Watch mode with the Node.js inspector |
-| `npm run build && npm run start:prod` | Compiled production build |
-| `docker compose up --build` | Container + demo upstreams ([details](operations.md#docker-compose)) |
+All other modes are in [All scripts](#all-scripts) below; `docker compose up
+--build` runs the gateway with demo upstreams ([Deployment](deployment.md)).
 
 ## Verify
 

@@ -13,9 +13,9 @@ context on every hop — all in a single small deployable.
 
 - **Declarative services** — each upstream is a small class stating its prefix,
   upstream URL, and auth policy; shared proxy behavior lives in one base class
-- **Pluggable edge auth** — API key, HTTP Basic, and JWT (HMAC or JWKS) built
-  in, all constant-time where applicable; new schemes register through a
-  strategy registry without touching existing code
+- **Pluggable edge auth** — API key, HTTP Basic, JWT (HMAC or JWKS), and Bearer
+  (opaque-token introspection against your own auth service) built in; new
+  schemes register through a strategy registry without touching existing code
 - **Service-to-service auth** — the gateway presents its own credentials to
   upstreams, so client credentials never leak past the edge
 - **Distributed tracing** — W3C `traceparent`, `x-request-id`, and

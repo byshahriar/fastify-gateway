@@ -48,7 +48,7 @@ src/
 │   ├── gateway-config.type.ts GatewayConfig, derived from the env schema
 │   └── fastify.d.ts           typings for runtime decorators
 ├── utils/                     pure helpers (crypto, auth parsing, tracing, alerts, …)
-├── strategies/                edge auth strategies — api-key, basic, jwt
+├── strategies/                edge auth strategies — api-key, basic, jwt, bearer
 ├── core/
 │   └── service-gateway.ts     abstract ServiceGateway + toPlugin() bridge
 ├── plugins/                   cross-cutting concerns, applied app-wide

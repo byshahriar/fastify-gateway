@@ -33,11 +33,27 @@ Each service declares one scheme:
 | `api-key` | Shared secret (`GATEWAY_API_KEY`) | `x-api-key` |
 | `basic` | User list (`BASIC_AUTH_USERS`) | `Authorization: Basic …` |
 | `jwt` | HMAC secret or JWKS (`JWT_SECRET` / `JWT_JWKS_URI`) | `Authorization: Bearer …` |
+| `bearer` | Introspection against your auth service (`BEARER_INTROSPECTION_URL`) | `Authorization: Bearer …` |
 | `none` | — | — |
 
 The `jwt` scheme verifies a signed token's signature and expiry, plus any
 configured issuer (`JWT_ISSUER`) and audience (`JWT_AUDIENCE`) claims, using
 either a shared HMAC secret (HS256) or a remote JWKS endpoint (RS256/ES256).
+
+The `bearer` scheme validates an opaque token against your own auth service:
+it POSTs `{ token }` to `BEARER_INTROSPECTION_URL` and requires an
+`{ "active": true }` response (RFC 7662 style). By default the gateway keeps no
+token state and introspects on every request, so revocation and refresh are the
+auth service's concern. Set `BEARER_INTROSPECTION_TOKEN` if that endpoint itself
+requires a credential.
+
+Set `BEARER_CACHE_TTL_MS` to a positive value to cache **active**-token
+decisions for that window, so repeated requests with the same token skip the
+introspection round-trip — cutting latency and load on the auth service under
+real traffic. Only active decisions are cached (keyed by a hash of the token,
+never the raw token), so an invalid-token flood cannot grow the cache. The
+tradeoff is revocation latency: a revoked token stays accepted until its cached
+entry expires, so keep the TTL short.
 
 All credential comparisons are constant-time (`crypto.timingSafeEqual`).
 Unknown-username lookups in Basic auth are equalized against a dummy secret,
@@ -49,8 +65,13 @@ so timing cannot distinguish existing from non-existing users.
 | --- | --- |
 | Missing or wrong credential | `401` with the uniform error body |
 | Failed Basic auth | `401` plus a `WWW-Authenticate: Basic` challenge |
-| Scheme enabled but not configured (empty key or user list) | `500 Gateway misconfigured` — a misconfigured gateway never silently allows traffic |
+| Expired, unsigned (`alg: none`), or claim-mismatched JWT | `401` |
+| Bearer token inactive, or the auth service unreachable / returns a non-2xx or invalid JSON | `401` (fail closed) |
+| Scheme enabled but not configured (empty key, user list, or introspection URL) | `500 Gateway misconfigured` — a misconfigured gateway never silently allows traffic |
 | Service references a scheme with no registered strategy | Startup failure, not a runtime surprise |
+
+Auth runs as a `preHandler` **before** the proxy, so a rejected request is
+never forwarded — the upstream sees nothing on a `401` or `500`.
 
 ## Upstream (service-to-service) authentication
 
@@ -81,20 +102,28 @@ A custom scheme that reads `Authorization` should override
 
 ## Custom schemes
 
-The built-in schemes (`api-key`, `basic`, `jwt`) are themselves factories in
-`src/strategies/`; new ones follow the same shape. A strategy is a factory
-producing an `AuthStrategy` (a Fastify preHandler), registered in the strategy
-registry. For example, an opaque-token introspection scheme:
+The built-in schemes (`api-key`, `basic`, `jwt`, `bearer`) are themselves
+factories in `src/strategies/`; new ones follow the same shape. A strategy is a
+factory producing an `AuthStrategy` (a Fastify preHandler), registered in the
+strategy registry. For example, an HMAC request-signature scheme:
 
 ```ts
-// src/strategies/opaque-token.strategy.ts
+// src/strategies/hmac-signature.strategy.ts
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type { AuthStrategy } from "@/types";
-import { parseBearerToken, sendUnauthorized } from "@/utils";
+import { sendUnauthorized } from "@/utils";
 
-export function createOpaqueTokenStrategy(introspect: (token: string) => Promise<boolean>): AuthStrategy {
+export function createHmacStrategy(secret: string): AuthStrategy {
   return async (req, reply) => {
-    const token = parseBearerToken(req.headers.authorization);
-    if (!token || !(await introspect(token))) return sendUnauthorized(req, reply);
+    const provided = req.headers["x-signature"];
+    const expected = createHmac("sha256", secret).update(req.url).digest("hex");
+    if (
+      typeof provided !== "string" ||
+      provided.length !== expected.length ||
+      !timingSafeEqual(Buffer.from(provided), Buffer.from(expected))
+    ) {
+      return sendUnauthorized(req, reply);
+    }
   };
 }
 ```
@@ -102,7 +131,7 @@ export function createOpaqueTokenStrategy(introspect: (token: string) => Promise
 Register it (in `plugins/auth.ts`, or any plugin registered after it):
 
 ```ts
-fastify.registerAuthStrategy(AuthScheme.Opaque, createOpaqueTokenStrategy(introspect));
+fastify.registerAuthStrategy(AuthScheme.Hmac, createHmacStrategy(fastify.config.HMAC_SECRET));
 ```
 
 Add the scheme value to `src/enums/auth-scheme.enum.ts`, and reference it from

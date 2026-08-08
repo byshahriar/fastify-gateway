@@ -74,6 +74,9 @@ timeout).
 | `JWT_JWKS_URI` | — | Remote JWKS endpoint (RS256/ES256) for the `jwt` scheme |
 | `JWT_ISSUER` | — | Required `iss` claim for the `jwt` scheme, if set |
 | `JWT_AUDIENCE` | — | Required `aud` claim for the `jwt` scheme, if set |
+| `BEARER_INTROSPECTION_URL` | — | Introspection endpoint for the `bearer` scheme; POSTs `{ token }`, expects `{ active }` |
+| `BEARER_INTROSPECTION_TOKEN` | — | Optional bearer token the gateway presents to the introspection endpoint |
+| `BEARER_CACHE_TTL_MS` | `0` | Cache active-token introspection decisions for this many ms; `0` introspects every request. A revoked token stays accepted until its cached entry expires — keep it short |
 
 `BASIC_AUTH_USERS` entries are parsed at boot; a malformed entry (missing
 colon, empty username or password) or a duplicate username prevents

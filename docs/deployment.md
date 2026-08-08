@@ -126,10 +126,6 @@ limitation — point each service at a Kubernetes Service DNS name and let the
 platform balance behind it. See the [security model](security-model.md) for
 the trust-boundary view and [ROADMAP](../ROADMAP.md) for the full scope.
 
-Plain Kubernetes gives you discovery, L4 load balancing, and config rollout.
-Circuit breaking, retries, and mTLS require actually running a service mesh —
-they are not automatic just because you are on Kubernetes.
-
 ## Releases
 
 Pushing a `v*` tag runs the release workflow, which re-verifies the build and
@@ -147,8 +143,6 @@ Pull it directly:
 docker pull ghcr.io/byshahriar/fastify-gateway:1.0.0
 ```
 
-The image is published to `ghcr.io/byshahriar/fastify-gateway`.
-
 ## Configuration in containers
 
 All configuration is environment variables — see
@@ -156,10 +150,3 @@ All configuration is environment variables — see
 secret store; never bake them into an image. The full list of what must be set
 per environment is in
 [Getting Started → Configure](getting-started.md#configure).
-
-## Health check summary
-
-| Concern | Endpoint | Behavior |
-| --- | --- | --- |
-| Liveness | `/healthz` | `200` while the process runs |
-| Readiness | `/readyz` | `200` ready, `503` draining during shutdown |

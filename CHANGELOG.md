@@ -20,9 +20,9 @@ and this project adheres to
 
 - Proxy core: per-service gateway classes with prefix rewriting, streamed
   bodies, undici connection pooling, and fail-fast connect/response timeouts
-- Edge authentication: API key (`x-api-key`), HTTP Basic, and JWT (Bearer,
-  HMAC or JWKS) schemes, plus a pluggable strategy registry for custom
-  schemes
+- Edge authentication: API key (`x-api-key`), HTTP Basic, JWT (HMAC or JWKS),
+  and Bearer (opaque-token introspection against your own auth service)
+  schemes, plus a pluggable strategy registry for custom schemes
 - Service-to-service authentication: per-upstream Basic credentials injected
   by the gateway, with client-credential stripping
 - Distributed tracing: W3C `traceparent` continuation, `x-request-id` and

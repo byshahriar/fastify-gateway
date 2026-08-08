@@ -66,10 +66,11 @@ flowchart LR
   balancer or a sidecar.
 - **Proxy trust.** Set `TRUST_PROXY=false` when clients connect directly, or
   `x-forwarded-for` (and thus rate-limit keys) can be spoofed.
-- **Strong secrets.** `GATEWAY_API_KEY`, `BASIC_AUTH_USERS`, `JWT_SECRET`, and
-  `METRICS_TOKEN` must be high-entropy; the shipped `change-me` values are
-  placeholders. Prefer `JWT_JWKS_URI` (asymmetric keys) over a shared HMAC
-  secret where the identity provider supports it.
+- **Strong secrets.** `GATEWAY_API_KEY`, `BASIC_AUTH_USERS`, `JWT_SECRET`,
+  `BEARER_INTROSPECTION_TOKEN`, and `METRICS_TOKEN` must be high-entropy; the
+  shipped `change-me` values are placeholders. Prefer `JWT_JWKS_URI`
+  (asymmetric keys) over a shared HMAC secret where the identity provider
+  supports it.
 - **Metrics exposure.** `/metrics` reveals process and traffic information;
   set `METRICS_TOKEN` and/or restrict it by network policy.
 - **Replica-wide rate limiting.** The in-memory limiter is per-instance; set
@@ -78,6 +79,13 @@ flowchart LR
 - **Alert and collector endpoints.** When alerting or OpenTelemetry are
   enabled, treat `SLACK_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL` and the OTLP
   endpoint as trusted sinks reachable from the gateway.
+- **Bearer introspection endpoint.** The `bearer` scheme delegates every token
+  decision to `BEARER_INTROSPECTION_URL`; that endpoint must be trusted,
+  reachable, and low-latency. If it is unreachable the gateway fails closed
+  (all requests to that service return 401). Setting `BEARER_CACHE_TTL_MS`
+  caches active-token decisions for that window to cut introspection load; the
+  cost is revocation latency (a revoked token is accepted until its entry
+  expires), so keep the TTL short.
 
 ## What upstreams remain responsible for
 

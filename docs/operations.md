@@ -91,9 +91,6 @@ down.
 - **Health probes** — `/healthz` (liveness) and `/readyz` (readiness), both
   auth-free and rate-limit-exempt. Readiness returns `503 draining` once
   shutdown begins.
-- **Direct exposure** — set `TRUST_PROXY=false` when there is no trusted
-  load balancer in front; otherwise clients can spoof `x-forwarded-for` to
-  evade per-IP rate limiting.
 
 ## Metrics
 
@@ -109,38 +106,6 @@ isolated by network policy. The route is rate-limit-exempt, so a token is the
 recommended protection against unauthenticated scraping. Default Node.js
 process metrics (memory, CPU, event-loop lag, versions) are included, so
 treat the endpoint as sensitive.
-
-## Docker
-
-A multi-stage `Dockerfile` ships with the repository:
-
-```bash
-docker build -t fastify-gateway .
-docker run --rm -p 8080:8080 --env-file .env fastify-gateway
-```
-
-The runtime image contains only production dependencies and the compiled
-`dist/`, runs as the non-root `node` user, and includes a container
-healthcheck against `/healthz`.
-
-### Docker Compose
-
-`compose.yaml` runs the gateway plus three demo echo upstreams, wired
-through Compose service DNS — a complete working topology in one command:
-
-```bash
-docker compose up --build
-
-curl localhost:8080/api/public/status                          # public
-curl -H "x-api-key: change-me" localhost:8080/api/users/me     # API key
-curl -u admin:change-me        localhost:8080/api/orders/list  # Basic auth
-```
-
-Credentials default to `change-me` and can be overridden from the shell
-environment (`GATEWAY_API_KEY=… docker compose up`). Replace the demo
-upstream services with your real ones and point the `*_SERVICE_URL`
-variables at them. Note the topology sets `TRUST_PROXY=false` — clients hit
-the published port directly, with no trusted load balancer in front.
 
 ## Limitations
 
@@ -162,19 +127,5 @@ Explicitly out of scope today:
 
 ## Security posture
 
-- Helmet security headers on every response (CSP disabled — the gateway
-  serves JSON, not HTML)
-- CORS origin allow-list; credentials off by default
-- Credentials redacted from logs; edge credentials stripped before proxying
-- Constant-time credential comparison (inputs hashed first, so timing
-  reveals nothing — not even credential length)
-- Boot-time rejection of dangerous configuration (wildcard CORS with
-  credentials, malformed or duplicate users, non-URL upstreams, and
-  malformed factory options that would otherwise silently disable a control)
-- Upstream credentials embedded in a service URL are stripped from logs
-- Bounded request timeout against slow-client attacks; optional escalating
-  ban (`RATE_LIMIT_BAN`) on repeat offenders
-- Optional bearer-token protection for `/metrics`
-- Client-forged `x-forwarded-for` replaced (not appended) when the proxy is
-  untrusted; bounded metric label cardinality
-- Fail-fast boot on invalid configuration
+Trust boundaries, credential handling, and the guarantees the gateway makes
+are documented in the [Security Model](security-model.md).
