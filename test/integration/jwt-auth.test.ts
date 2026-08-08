@@ -120,6 +120,24 @@ describe("jwt auth scheme", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ service: "jwt" });
   });
+
+  it("rejects an unsecured 'alg: none' token", async () => {
+    const b64 = (obj: object) => Buffer.from(JSON.stringify(obj)).toString("base64url");
+    const unsecured = `${b64({ alg: "none", typ: "JWT" })}.${b64({ sub: "x" })}.`;
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/jwt/data",
+      headers: { authorization: `Bearer ${unsecured}` },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("does not forward an unauthenticated request to the upstream", async () => {
+    const before = upstream.requests.length;
+    const res = await app.inject({ method: "GET", url: "/api/jwt/data" });
+    expect(res.statusCode).toBe(401);
+    expect(upstream.requests.length).toBe(before);
+  });
 });
 
 describe("jwt claim enforcement", () => {

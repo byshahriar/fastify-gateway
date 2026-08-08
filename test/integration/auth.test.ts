@@ -131,6 +131,31 @@ describe("edge authentication", () => {
       expect(res.json()).toEqual({ service: "public" });
     });
   });
+
+  describe("fail-closed enforcement", () => {
+    it("does not forward an unauthenticated api-key request to the upstream", async () => {
+      const before = upstreams.users.requests.length;
+      const res = await app.inject({ method: "GET", url: "/api/users/me" });
+      expect(res.statusCode).toBe(401);
+      expect(upstreams.users.requests.length).toBe(before);
+    });
+
+    it("does not forward an unauthenticated basic request to the upstream", async () => {
+      const before = upstreams.orders.requests.length;
+      const res = await app.inject({ method: "GET", url: "/api/orders/list" });
+      expect(res.statusCode).toBe(401);
+      expect(upstreams.orders.requests.length).toBe(before);
+    });
+
+    it("rejects an x-api-key sent as multiple header values", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/users/me",
+        headers: { "x-api-key": ["test-api-key", "test-api-key"] },
+      });
+      expect(res.statusCode).toBe(401);
+    });
+  });
 });
 
 describe("auth misconfiguration", () => {
