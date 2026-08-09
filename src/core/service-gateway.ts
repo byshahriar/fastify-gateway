@@ -5,6 +5,8 @@ import { AuthScheme } from "@/enums";
 import type { GatewayConfig } from "@/types";
 import { encodeBasicAuth, redactUrlCredentials } from "@/utils";
 
+// Local aliases for @fastify/http-proxy's nested option types, so
+// createHeaderRewriter below can declare a clean return type.
 type ReplyOptions = NonNullable<FastifyHttpProxyOptions["replyOptions"]>;
 type HeaderRewriter = NonNullable<ReplyOptions["rewriteRequestHeaders"]>;
 
