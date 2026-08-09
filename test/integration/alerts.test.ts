@@ -2,6 +2,7 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
+import { AlertChannelKind, AlertLevel } from "@/enums";
 import { buildTestApp } from "@test/helpers/app";
 import { deadUpstreamUrl, startUpstream, type TestUpstream } from "@test/helpers/upstream";
 
@@ -21,7 +22,7 @@ async function buildAlertingApp(overrides: Record<string, string> = {}) {
   discord = await startUpstream();
   app = await buildTestApp({
     ALERTS_ENABLED: "true",
-    ALERT_CHANNEL: "slack",
+    ALERT_CHANNEL: AlertChannelKind.Slack,
     SLACK_WEBHOOK_URL: slack.url,
     DISCORD_WEBHOOK_URL: discord.url,
     ALERT_THROTTLE_MS: "0",
@@ -33,7 +34,7 @@ async function buildAlertingApp(overrides: Record<string, string> = {}) {
 
 describe("chat-channel alerting", () => {
   it("notifies only the selected channel on a 5xx", async () => {
-    const gateway = await buildAlertingApp({ ALERT_CHANNEL: "slack" });
+    const gateway = await buildAlertingApp({ ALERT_CHANNEL: AlertChannelKind.Slack });
 
     const res = await gateway.inject({ method: "GET", url: "/api/public/status" });
     expect(res.statusCode).toBe(502);
@@ -48,7 +49,7 @@ describe("chat-channel alerting", () => {
   });
 
   it("uses Discord when it is the selected channel", async () => {
-    const gateway = await buildAlertingApp({ ALERT_CHANNEL: "discord" });
+    const gateway = await buildAlertingApp({ ALERT_CHANNEL: AlertChannelKind.Discord });
 
     await gateway.inject({ method: "GET", url: "/api/public/status" });
 
@@ -83,7 +84,7 @@ describe("chat-channel alerting", () => {
   it("tolerates a failing webhook without crashing", async () => {
     app = await buildTestApp({
       ALERTS_ENABLED: "true",
-      ALERT_CHANNEL: "slack",
+      ALERT_CHANNEL: AlertChannelKind.Slack,
       SLACK_WEBHOOK_URL: "http://127.0.0.1:1/dead",
       ALERT_THROTTLE_MS: "0",
       ALERT_RETRIES: "0",
@@ -112,7 +113,7 @@ describe("chat-channel alerting", () => {
     try {
       app = await buildTestApp({
         ALERTS_ENABLED: "true",
-        ALERT_CHANNEL: "slack",
+        ALERT_CHANNEL: AlertChannelKind.Slack,
         SLACK_WEBHOOK_URL: `http://127.0.0.1:${port}`,
         ALERT_THROTTLE_MS: "0",
         ALERT_RETRIES: "2",
@@ -128,7 +129,7 @@ describe("chat-channel alerting", () => {
   });
 
   it("boots and no-ops when enabled with ALERT_CHANNEL=none", async () => {
-    app = await buildTestApp({ ALERTS_ENABLED: "true", ALERT_CHANNEL: "none" });
+    app = await buildTestApp({ ALERTS_ENABLED: "true", ALERT_CHANNEL: AlertChannelKind.None });
     const res = await app.inject({ method: "GET", url: "/healthz" });
     expect(res.statusCode).toBe(200);
   });
@@ -160,7 +161,7 @@ describe("alert level", () => {
   });
 
   it("alerts on a 4xx as warning at the warn level", async () => {
-    const gateway = await buildAlertingApp({ ALERT_LEVEL: "warn" });
+    const gateway = await buildAlertingApp({ ALERT_LEVEL: AlertLevel.Warn });
 
     const res = await gateway.inject({ method: "GET", url: "/nope" });
     expect(res.statusCode).toBe(404);
@@ -173,7 +174,11 @@ describe("alert level", () => {
 
   it("refuses to start with an invalid ALERT_LEVEL", async () => {
     await expect(
-      buildTestApp({ ALERTS_ENABLED: "true", ALERT_CHANNEL: "slack", ALERT_LEVEL: "debug" }),
+      buildTestApp({
+        ALERTS_ENABLED: "true",
+        ALERT_CHANNEL: AlertChannelKind.Slack,
+        ALERT_LEVEL: "debug",
+      }),
     ).rejects.toThrow();
   });
 });

@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildLoggerOptions, flushLogDestinations } from "@/config/logger";
+import { LogDestination } from "@/enums";
 
 const KEYS = [
   "LOG_LEVEL",
@@ -56,7 +57,7 @@ describe("buildLoggerOptions", () => {
   });
 
   it("configures a rotating file transport with retention when LOG_DESTINATION=file", async () => {
-    process.env.LOG_DESTINATION = "file";
+    process.env.LOG_DESTINATION = LogDestination.File;
     const transport = (await buildLoggerOptions()).transport as {
       target: string;
       options: Record<string, unknown>;
@@ -72,7 +73,7 @@ describe("buildLoggerOptions", () => {
   });
 
   it("applies file, rotation, and retention overrides", async () => {
-    process.env.LOG_DESTINATION = "file";
+    process.env.LOG_DESTINATION = LogDestination.File;
     process.env.LOG_FILE = "/var/log/gw.log";
     process.env.LOG_ROTATION_FREQUENCY = "hourly";
     process.env.LOG_ROTATION_MAX_SIZE = "50m";
@@ -89,7 +90,7 @@ describe("buildLoggerOptions", () => {
   });
 
   it("fans out to console and file channels when both are requested", async () => {
-    process.env.LOG_DESTINATION = "console,file";
+    process.env.LOG_DESTINATION = `${LogDestination.Console},${LogDestination.File}`;
     process.env.LOG_FILE = join(mkdtempSync(join(tmpdir(), "gw-logger-")), "gateway.log");
 
     const options = await buildLoggerOptions();
