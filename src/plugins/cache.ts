@@ -77,12 +77,11 @@ function varyIsKeyed(reply: FastifyReply): boolean {
 }
 
 /**
- * Response caching plugin. When `CACHE_ENABLED` is set it decorates
- * `fastify.gatewayCache` with hook factories that services opt into via
- * {@link ServiceGateway.cacheable}; when disabled the decorator is absent and
- * services proxy straight through.
- *
- * Semantics (shared-cache rules, deliberately conservative):
+ * Response caching plugin, applying deliberately conservative shared-cache
+ * rules. When `CACHE_ENABLED` is set it decorates `fastify.gatewayCache`
+ * with hook factories that services opt into via
+ * {@link ServiceGateway.cacheable}; when disabled the decorator is absent
+ * and services proxy straight through.
  *
  * - Only `GET` responses with status 200 are cached, keyed by service, URL,
  *   and the `accept`/`accept-encoding` request headers.
@@ -93,8 +92,8 @@ function varyIsKeyed(reply: FastifyReply): boolean {
  *   applies (default 0: cache only what the upstream opts into).
  * - A request `Cache-Control: no-cache` skips the lookup (a revalidation
  *   pass-through); `no-store` skips storing too.
- * - Bodies are teed while streaming to the client and stored after the fact,
- *   so caching never buffers the response path; bodies over
+ * - Bodies are teed while streaming to the client and stored after the
+ *   fact, so caching never buffers the response path; bodies over
  *   `CACHE_MAX_BODY_BYTES` are streamed through and not stored.
  * - Redis errors and slow lookups fail open: a cache outage never takes the
  *   gateway down. Hits carry `x-cache: HIT`, stored misses `x-cache: MISS`.

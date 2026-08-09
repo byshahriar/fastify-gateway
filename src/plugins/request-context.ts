@@ -7,15 +7,14 @@ import { formatTraceparent, nextTraceContext } from "@/utils";
 const MAX_TRACESTATE_LENGTH = 512;
 
 /**
- * Request correlation and distributed tracing plugin. For every request the
- * gateway:
+ * Request correlation and distributed tracing plugin.
  *
- * - honors or generates `x-request-id` (via the factory's `genReqId`),
- * - honors or generates `x-correlation-id` (defaults to the request id),
- * - continues or starts a W3C `traceparent` (same trace id, new span id),
- * - carries `tracestate` only alongside a continued trace,
- * - binds all ids into the request logger so every log line correlates,
- * - propagates the ids to upstreams and echoes them on the response.
+ * - Honors or generates `x-request-id` (via the factory's `genReqId`).
+ * - Honors or generates `x-correlation-id`, defaulting to the request id.
+ * - Continues or starts a W3C `traceparent` (same trace id, new span id).
+ * - Carries `tracestate` only alongside a continued trace.
+ * - Binds all ids into the request logger so every log line correlates.
+ * - Propagates the ids to upstreams and echoes them on the response.
  */
 export default fp(
   async (fastify) => {

@@ -11,15 +11,17 @@ type HeaderRewriter = NonNullable<ReplyOptions["rewriteRequestHeaders"]>;
 /**
  * Base class for a single upstream proxy.
  *
- * A subclass declares what to proxy (prefix, upstream, auth policy) and
- * {@link ServiceGateway.toPlugin} turns that declaration into an encapsulated
- * Fastify plugin registered in `app.ts`. Encapsulation keeps hooks and
- * decorators added for one service from leaking into another.
+ * A subclass declares what to proxy (prefix, upstream, auth policy), and
+ * {@link ServiceGateway.toPlugin} turns that declaration into an
+ * encapsulated Fastify plugin registered in `app.ts`. Encapsulation keeps
+ * hooks and decorators added for one service from leaking into another.
  *
- * Shared proxy behavior lives here once, split into overridable steps: edge
- * auth is resolved from the strategy registry, {@link connectionOptions}
- * shapes pooling and timeouts, and {@link createHeaderRewriter} controls
- * forwarded headers and credential handling.
+ * Shared proxy behavior lives here once, split into overridable steps:
+ *
+ * - Edge auth is resolved from the strategy registry.
+ * - {@link connectionOptions} shapes pooling and timeouts.
+ * - {@link createHeaderRewriter} controls forwarded headers and credential
+ *   handling.
  */
 export abstract class ServiceGateway {
   /**

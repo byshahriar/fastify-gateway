@@ -4,17 +4,18 @@ import { ErrorMessage, Header, HttpStatus } from "@/constants";
 import { errorBody } from "@/utils";
 
 /**
- * Load-shedding plugin backed by `@fastify/under-pressure`. The event loop
- * and memory are sampled on an interval; while any configured threshold is
- * exceeded, incoming requests are answered `503` with a `Retry-After` header
- * instead of queueing behind work the instance cannot absorb — an overloaded
- * gateway stays responsive and recovers instead of degrading every request.
+ * Load-shedding plugin backed by `@fastify/under-pressure`.
  *
- * Routes marked `config: { shed: false }` (health probes, /metrics) are never
- * shed: liveness must not fail under load — that would turn an overload into
- * a restart loop — and operators need metrics most during an incident.
- * Readiness reports the pressure state via `fastify.isUnderPressure()` so
- * orchestrators route traffic away while the instance sheds.
+ * - The event loop and memory are sampled on an interval; while any
+ *   configured threshold is exceeded, incoming requests are answered `503`
+ *   with a `Retry-After` header instead of queueing behind work the
+ *   instance cannot absorb.
+ * - Routes marked `config: { shed: false }` (health probes, `/metrics`) are
+ *   never shed: liveness must not fail under load — that would turn an
+ *   overload into a restart loop — and operators need metrics most during
+ *   an incident.
+ * - Readiness reports the pressure state via `fastify.isUnderPressure()` so
+ *   orchestrators route traffic away while the instance sheds.
  */
 export default fp(
   async (fastify) => {

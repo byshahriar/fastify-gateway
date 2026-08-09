@@ -2,20 +2,21 @@ import fp from "fastify-plugin";
 import rateLimit from "@fastify/rate-limit";
 
 /**
- * Per-client rate limiting keyed by IP. `req.ip` reflects the real client
- * (see `TRUST_PROXY`). Routes can opt out with `config: { rateLimit: false }`.
+ * Per-client rate limiting keyed by IP.
  *
- * Because rate limiting runs before edge auth, failed credential attempts
- * consume the budget — throttling brute force. `RATE_LIMIT_BAN` adds
- * escalating friction: after that many consecutive over-limit responses a
- * client IP is temporarily banned outright.
- *
- * Store selection: with `REDIS_URL` set, the shared `fastify.redis` client
- * (from the `redis` plugin) backs the limiter so state is shared across
- * replicas; otherwise an in-memory store is used, correct only for a single
- * instance. `skipOnError` makes the limiter fail open on store errors —
- * combined with the client's disabled offline queue (see the redis plugin),
- * a Redis outage means unthrottled traffic, never hung or failed requests.
+ * - `req.ip` reflects the real client (see `TRUST_PROXY`); routes opt out
+ *   with `config: { rateLimit: false }`.
+ * - Rate limiting runs before edge auth, so failed credential attempts
+ *   consume the budget too — throttling brute force.
+ * - `RATE_LIMIT_BAN` adds escalating friction: after that many consecutive
+ *   over-limit responses, a client IP is temporarily banned outright.
+ * - With `REDIS_URL` set, the shared `fastify.redis` client (from the
+ *   `redis` plugin) backs the limiter so state is shared across replicas;
+ *   otherwise an in-memory store is used, correct only for a single
+ *   instance.
+ * - `skipOnError` makes the limiter fail open on store errors — combined
+ *   with the client's disabled offline queue (see the redis plugin), a
+ *   Redis outage means unthrottled traffic, never hung or failed requests.
  */
 export default fp(
   async (fastify) => {

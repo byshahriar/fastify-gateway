@@ -86,28 +86,26 @@ function fileRotationOptions() {
 }
 
 /**
- * Builds the Fastify/pino logger options from the environment.
+ * Builds the Fastify/pino logger options from the environment. Format is
+ * standardized structured JSON with ISO-8601 timestamps and string level
+ * labels, identical on every channel. `LOG_DESTINATION` selects the
+ * channels, singly or combined (comma-separated).
  *
- * Format is standardized structured JSON with ISO-8601 timestamps and string
- * level labels, identical on every channel. `LOG_DESTINATION` selects the
- * channels, singly or combined (comma-separated):
- *
- * - `console` (default) — stdout; correct for containers, where the platform
- *   handles rotation.
+ * - `console` (default) — stdout; correct for containers, where the
+ *   platform handles rotation.
  * - `file` — a rotating file via pino-roll, with size/interval rotation
- *   (`LOG_ROTATION_MAX_SIZE`, `LOG_ROTATION_FREQUENCY`) and retention of the
- *   most recent files (`LOG_RETENTION_FILES`).
- * - `console,file` — both at once. This case fans out through an in-process
- *   `pino.multistream` rather than worker transports, because pino disallows
- *   custom level formatters with multiple worker targets and the log format
- *   must stay identical across channels.
- *
- * `LOG_BUFFER_BYTES` (default 0) enables buffered asynchronous stdout
- * writes: log lines are batched until that many bytes accumulate instead of
- * being written synchronously — a substantial throughput lever at high
- * request rates. The trade-off is that a hard crash (`SIGKILL`, OOM) can
- * lose the buffered tail; orderly shutdown flushes it (see
- * {@link flushLogDestinations}).
+ *   (`LOG_ROTATION_MAX_SIZE`, `LOG_ROTATION_FREQUENCY`) and retention of
+ *   the most recent files (`LOG_RETENTION_FILES`).
+ * - `console,file` — both at once. This case fans out through an
+ *   in-process `pino.multistream` rather than worker transports, because
+ *   pino disallows custom level formatters with multiple worker targets
+ *   and the log format must stay identical across channels.
+ * - `LOG_BUFFER_BYTES` (default 0) enables buffered asynchronous stdout
+ *   writes: log lines are batched until that many bytes accumulate instead
+ *   of being written synchronously — a substantial throughput lever at
+ *   high request rates. The trade-off is that a hard crash (`SIGKILL`,
+ *   OOM) can lose the buffered tail; orderly shutdown flushes it (see
+ *   {@link flushLogDestinations}).
  *
  * @returns The logger options (and, when a stream is composed in-process,
  *   the stream) passed to the Fastify factory.

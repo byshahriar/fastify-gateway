@@ -58,9 +58,11 @@ function clientMessage(status: number, err: FastifyError): string {
 }
 
 /**
- * Uniform error and 404 responses. Registered at the root scope so failures
- * raised inside encapsulated service proxies are covered too. Every error
- * body carries the request id for correlation.
+ * Uniform error and `404` responses.
+ *
+ * - Registered at the root scope, so failures raised inside encapsulated
+ *   service proxies are covered too.
+ * - Every error body carries the request id for correlation.
  */
 export default fp(
   async (fastify) => {

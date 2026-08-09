@@ -3,12 +3,12 @@ import helmet from "@fastify/helmet";
 import cors from "@fastify/cors";
 
 /**
- * Security headers and CORS, applied app-wide (proxied routes included).
- * CSP is disabled because the gateway serves JSON APIs, not HTML.
+ * Security headers and CORS, applied app-wide, including proxied routes.
  *
- * Wildcard origins combined with credentials would reflect any origin on
- * credentialed requests — a configuration that exposes authenticated APIs to
- * every site on the internet — so it is rejected at boot.
+ * - CSP is disabled: the gateway serves JSON APIs, not HTML.
+ * - Wildcard origins combined with credentials would reflect any origin on
+ *   credentialed requests — a configuration that exposes authenticated APIs
+ *   to every site on the internet — so that combination is rejected at boot.
  */
 export default fp(
   async (fastify) => {

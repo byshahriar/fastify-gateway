@@ -11,12 +11,12 @@ import { buildIpList, errorBody, normalizeIp } from "@/utils";
  * - `IP_ALLOW_LIST`, when non-empty, blocks every client it does not match.
  * - Both accept plain IPs and CIDR ranges, IPv4 and IPv6; invalid entries
  *   fail the boot rather than silently changing what is blocked.
- *
- * Blocked clients receive the uniform 403 body. With both lists empty the
- * plugin adds no hook and costs nothing per request. Health probes opt out
- * via `config: { ipFilter: false }` so a misconfigured list can never fail
- * liveness and restart-loop the instance; /metrics stays filtered because a
- * failed scrape is visible and recoverable.
+ * - Blocked clients receive the uniform `403` body. With both lists empty,
+ *   the plugin adds no hook and costs nothing per request.
+ * - Health probes opt out via `config: { ipFilter: false }` so a
+ *   misconfigured list can never fail liveness and restart-loop the
+ *   instance; `/metrics` stays filtered because a failed scrape is visible
+ *   and recoverable.
  */
 export default fp(
   async (fastify) => {

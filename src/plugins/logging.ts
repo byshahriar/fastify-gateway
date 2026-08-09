@@ -8,9 +8,9 @@ import { flushLogDestinations } from "@/config/logger";
 export const REQUEST_LOG_STYLES = ["fastify", "single", "off"] as const;
 
 /**
- * Logging plugin. The pino instance itself must be created with the Fastify
- * factory (see `config/logger.ts`) — before any plugin runs — so this plugin
- * owns every logging concern that is hook-based:
+ * Logging plugin. The pino instance itself must be created with the
+ * Fastify factory (see `config/logger.ts`) before any plugin runs, so this
+ * plugin owns every logging concern that is hook-based.
  *
  * - Flushes buffered in-process log destinations on `onClose`, so embedded
  *   apps and tests get the same no-lost-tail guarantee as the server entry
@@ -18,14 +18,14 @@ export const REQUEST_LOG_STYLES = ["fastify", "single", "off"] as const;
  * - `LOG_REQUEST_STYLE=single` replaces Fastify's two per-request lines
  *   (incoming + completed) with one structured completion line — half the
  *   log volume at gateway request rates — carrying method, url, matched
- *   route, status, duration, and client IP. `off` logs nothing per request;
- *   errors are still logged by the error handler. The factory reads the same
- *   variable to disable Fastify's built-in request logging (`app.ts`).
+ *   route, status, duration, and client IP. `off` logs nothing per
+ *   request; errors are still logged by the error handler. The factory
+ *   reads the same variable to disable Fastify's built-in request logging
+ *   (`app.ts`).
  * - `SLOW_REQUEST_MS` (schema-validated) warns on requests slower than the
  *   threshold, so latency outliers are visible without tracing.
- *
- * Both hooks read `req.log`, which request-context has already bound to the
- * request's correlation and trace ids.
+ * - Both hooks read `req.log`, which request-context has already bound to
+ *   the request's correlation and trace ids.
  */
 export default fp(
   async (fastify) => {

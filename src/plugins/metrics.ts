@@ -3,15 +3,16 @@ import { collectDefaultMetrics, Counter, Histogram, Registry } from "prom-client
 import { KNOWN_HTTP_METHODS, OTHER_METHOD_LABEL } from "@/constants";
 
 /**
- * Prometheus metrics plugin. Maintains a per-instance registry (so test and
- * embedded instances never collide) with Node.js default metrics plus:
+ * Prometheus metrics plugin. Maintains a per-instance registry (so test
+ * and embedded instances never collide) with Node.js default metrics plus
+ * two custom series.
  *
  * - `http_requests_total{method,route,status}`
  * - `http_request_duration_seconds{method,route,status}`
- *
- * The `route` label is the matched route pattern — never the raw URL — so
- * label cardinality stays bounded. The registry is exposed as
- * `fastify.metricsRegistry` and served by the `/metrics` route.
+ * - The `route` label is the matched route pattern — never the raw URL —
+ *   so label cardinality stays bounded.
+ * - The registry is exposed as `fastify.metricsRegistry` and served by the
+ *   `/metrics` route.
  */
 export default fp(
   async (fastify) => {

@@ -10,11 +10,13 @@ import type { AuthStrategy } from "@/types";
 import { parseUserList } from "@/utils";
 
 /**
- * Edge authentication plugin. Maintains the registry mapping each
- * {@link AuthScheme} to its request guard and registers the built-in
- * strategies. Services resolve their guard with `fastify.authStrategy`;
- * additional schemes plug in through `fastify.registerAuthStrategy` without
- * modifying this plugin or the proxy core.
+ * Edge authentication plugin.
+ *
+ * - Maintains the registry mapping each {@link AuthScheme} to its request
+ *   guard, and registers the built-in strategies.
+ * - Services resolve their guard with `fastify.authStrategy`.
+ * - Additional schemes plug in through `fastify.registerAuthStrategy`
+ *   without modifying this plugin or the proxy core.
  */
 export default fp(
   async (fastify) => {

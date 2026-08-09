@@ -7,14 +7,17 @@ import { alertThreshold, selectAlertChannel, severityForStatus } from "@/utils";
 const WEBHOOK_TIMEOUT_MS = 5000;
 
 /**
- * Chat-channel alerting plugin (feature flag: `ALERTS_ENABLED`). When enabled
- * with `ALERT_CHANNEL` set to a configured channel, a response at or above the
- * `ALERT_LEVEL` threshold (`error` = 5xx, `warn` = 4xx + 5xx) posts a
- * notification to that single channel (Slack or Discord), throttled to at most
- * one per `ALERT_THROTTLE_MS` to avoid flooding it. Delivery is retried with
- * exponential backoff (`ALERT_RETRIES`), runs after the response is sent so it
- * never affects the client, and a webhook that fails every attempt is logged
- * rather than raised.
+ * Chat-channel alerting plugin (feature flag: `ALERTS_ENABLED`).
+ *
+ * - When enabled with `ALERT_CHANNEL` set to a configured channel, a
+ *   response at or above the `ALERT_LEVEL` threshold (`error` = 5xx,
+ *   `warn` = 4xx + 5xx) posts a notification to that single channel
+ *   (Slack or Discord).
+ * - Notifications are throttled to at most one per `ALERT_THROTTLE_MS` to
+ *   avoid flooding the channel.
+ * - Delivery is retried with exponential backoff (`ALERT_RETRIES`), fires
+ *   without blocking the response, and a webhook that fails every attempt
+ *   is logged rather than raised.
  */
 export default fp(
   async (fastify) => {
