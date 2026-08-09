@@ -30,7 +30,7 @@ export default fp(
       enableOfflineQueue: false,
     });
 
-    // Without a listener an emitted 'error' would crash the process.
+    // Without a listener an emitted `error` would crash the process.
     fastify.redis.on("error", (err) => {
       fastify.log.error({ err }, "redis client error");
     });
