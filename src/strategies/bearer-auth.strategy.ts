@@ -111,8 +111,10 @@ export function createBearerAuthStrategy(options: BearerAuthOptions): AuthStrate
       cacheKey = createHash("sha256").update(token).digest("hex");
       const expiresAt = cache.get(cacheKey);
       if (expiresAt !== undefined) {
-        if (expiresAt > Date.now()) return; // cached active token — allow
-        cache.delete(cacheKey); // expired — re-introspect below
+        // Cached decision is still active — allow the request.
+        if (expiresAt > Date.now()) return;
+        // Cached decision expired — fall through to re-introspect.
+        cache.delete(cacheKey);
       }
     }
 
