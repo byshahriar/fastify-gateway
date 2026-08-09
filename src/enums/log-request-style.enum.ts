@@ -1,5 +1,8 @@
 /**
  * Per-request logging style `LOG_REQUEST_STYLE` selects.
+ *
+ * Declared as an `as const` object rather than a TypeScript `enum`; see
+ * `enums/auth-scheme.enum.ts` for why.
  */
 export const LogRequestStyle = {
   Fastify: "fastify",
