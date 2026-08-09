@@ -3,6 +3,7 @@ import type { FastifyError } from "fastify";
 import { ErrorMessage, HttpStatus } from "@/constants";
 import { errorBody } from "@/utils";
 
+// undici error codes for a slow upstream: connect or response took too long.
 const UPSTREAM_TIMEOUT_CODES = new Set([
   "UND_ERR_HEADERS_TIMEOUT",
   "UND_ERR_BODY_TIMEOUT",
@@ -10,6 +11,7 @@ const UPSTREAM_TIMEOUT_CODES = new Set([
   "ETIMEDOUT",
 ]);
 
+// Node/undici error codes for an unreachable or reset upstream connection.
 const UPSTREAM_CONNECTION_CODES = new Set([
   "ECONNREFUSED",
   "ECONNRESET",

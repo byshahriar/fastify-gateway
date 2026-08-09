@@ -19,6 +19,4 @@ export class UsersGateway extends ServiceGateway {
   }
 }
 
-// The default export is the plugin registered in app.ts; the class stays
-// exported for tests and subclassing.
 export default new UsersGateway().toPlugin();

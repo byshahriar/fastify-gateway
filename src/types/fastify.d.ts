@@ -18,6 +18,9 @@ import type { GatewayConfig } from "@/types/gateway-config.type";
  */
 declare module "fastify" {
   interface FastifyInstance {
+    /**
+     * Validated, schema-derived configuration; see `config/schema.ts`.
+     */
     config: GatewayConfig;
     /**
      * True once shutdown has begun; readiness reports draining.

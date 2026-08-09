@@ -14,6 +14,7 @@ const statusReplySchema = {
   additionalProperties: false,
 } as const;
 
+// Shared route options for both probe endpoints below.
 const probeConfig = {
   config: probeExemptions,
   schema: { response: { 200: statusReplySchema, 503: statusReplySchema } },

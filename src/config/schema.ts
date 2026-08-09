@@ -11,11 +11,14 @@
 export const configSchema = {
   type: "object",
   properties: {
+    // Listen address and port.
     PORT: { type: "number", default: 8080 },
     HOST: { type: "string", default: "0.0.0.0" },
 
     // Comma-separated origin allow-list; `"*"` allows any origin.
     CORS_ORIGINS: { type: "string", default: "*" },
+    // Sends Access-Control-Allow-Credentials; rejected at boot when combined
+    // with a wildcard CORS_ORIGINS (see plugins/security.ts).
     CORS_ALLOW_CREDENTIALS: { type: "boolean", default: false },
 
     // Shared secret for services using the `api-key` auth scheme.
@@ -74,6 +77,7 @@ export const configSchema = {
     CACHE_DEFAULT_TTL_MS: { type: "number", default: 0 },
     CACHE_MAX_BODY_BYTES: { type: "number", default: 1048576 },
 
+    // Requests allowed per client IP within the window.
     RATE_LIMIT_MAX: { type: "number", default: 100 },
     RATE_LIMIT_WINDOW_MS: { type: "number", default: 60000 },
 
@@ -96,21 +100,23 @@ export const configSchema = {
     ALERT_CHANNEL: { type: "string", enum: ["none", "slack", "discord"], default: "none" },
     // Lowest response class to alert on: "error" (5xx) or "warn" (4xx + 5xx).
     ALERT_LEVEL: { type: "string", enum: ["error", "warn"], default: "error" },
+    // Webhook URL for the corresponding ALERT_CHANNEL selection.
     SLACK_WEBHOOK_URL: { type: "string", default: "" },
     DISCORD_WEBHOOK_URL: { type: "string", default: "" },
+    // Minimum interval between alert notifications.
     ALERT_THROTTLE_MS: { type: "number", default: 60000 },
     // Retries (beyond the first attempt) for webhook delivery, with
     // exponential backoff. 0 disables retrying.
     ALERT_RETRIES: { type: "number", default: 2 },
 
+    // Per-service undici connection pool: response timeout, TCP connect
+    // timeout, and pool size.
     UPSTREAM_TIMEOUT_MS: { type: "number", default: 10000 },
     UPSTREAM_CONNECT_TIMEOUT_MS: { type: "number", default: 2000 },
     UPSTREAM_MAX_CONNECTIONS: { type: "number", default: 128 },
 
-    /**
-     * One base URL per service, plus optional `username:password` credentials
-     * the gateway uses to authenticate against that upstream.
-     */
+    // One base URL per service, plus optional `username:password` credentials
+    // the gateway uses to authenticate against that upstream.
     USERS_SERVICE_URL: {
       type: "string",
       pattern: "^https?://",
