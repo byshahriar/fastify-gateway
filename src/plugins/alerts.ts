@@ -1,5 +1,6 @@
 import fp from "fastify-plugin";
 import pRetry from "p-retry";
+import { Header } from "@/constants";
 import { alertThreshold, selectAlertChannel, severityForStatus } from "@/utils";
 
 // Bound each webhook attempt so an endpoint that accepts the connection but
@@ -46,11 +47,11 @@ export default fp(
         async () => {
           const res = await fetch(channel!.url, {
             method: "POST",
-            headers: { "content-type": "application/json" },
+            headers: { [Header.ContentType]: "application/json" },
             body,
             signal: AbortSignal.timeout(WEBHOOK_TIMEOUT_MS),
           });
-          // fetch does not reject on HTTP errors; throw so p-retry retries.
+          // Fetch does not reject on HTTP errors; throw so p-retry retries.
           if (!res.ok) throw new Error(`webhook responded ${res.status}`);
         },
         { retries, minTimeout: 200, factor: 2 },
