@@ -21,11 +21,15 @@ const probeConfig = {
 };
 
 /**
- * Liveness and readiness probes. Exempt from rate limiting so orchestrator
- * and load-balancer health checks can never exhaust a client's budget, and
- * from load shedding so an overload cannot fail liveness and trigger a
- * restart loop. Readiness reports draining during shutdown, and pressure
- * while the instance is shedding, so traffic is routed away in both cases.
+ * Liveness and readiness probes.
+ *
+ * - Exempt from rate limiting, so orchestrator and load-balancer health
+ *   checks can never exhaust a client's budget.
+ * - Exempt from load shedding, so an overload cannot fail liveness and
+ *   trigger a restart loop.
+ * - Readiness reports `draining` during shutdown, and `under-pressure`
+ *   while the instance is shedding load, so traffic is routed away in
+ *   both cases.
  */
 const health: FastifyPluginAsync = async (fastify) => {
   fastify.get("/healthz", probeConfig, async () => ({ status: "ok" }));
