@@ -1,6 +1,7 @@
 import pino from "pino";
 import { envNumber } from "@/config/env";
 import { Header } from "@/constants";
+import { LogDestination } from "@/enums";
 
 // Sensitive request headers never written to any log destination.
 const REDACT_PATHS = [
@@ -10,7 +11,7 @@ const REDACT_PATHS = [
 ];
 
 // Channels LOG_DESTINATION may name.
-const VALID_DESTINATIONS = new Set(["console", "file"]);
+const VALID_DESTINATIONS = new Set<string>(Object.values(LogDestination));
 
 /**
  * Logger options plus the optional destination stream Fastify accepts
@@ -52,11 +53,11 @@ export function flushLogDestinations(): void {
  * @returns The channels to log to; defaults to `console`.
  */
 function parseDestinations(): Set<string> {
-  const channels = (process.env.LOG_DESTINATION ?? "console")
+  const channels = (process.env.LOG_DESTINATION ?? LogDestination.Console)
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  const set = new Set(channels.length > 0 ? channels : ["console"]);
+  const set = new Set(channels.length > 0 ? channels : [LogDestination.Console]);
 
   for (const channel of set) {
     if (!VALID_DESTINATIONS.has(channel)) {
@@ -134,7 +135,7 @@ export async function buildLoggerOptions(): Promise<LoggerConfig> {
         : pino.destination(1),
     );
 
-  if (destinations.has("console") && destinations.has("file")) {
+  if (destinations.has(LogDestination.Console) && destinations.has(LogDestination.File)) {
     const { default: pinoRoll } = await import("pino-roll");
     const fileStream = track(await pinoRoll(fileRotationOptions()));
     const level = options.level as pino.Level;
@@ -142,7 +143,7 @@ export async function buildLoggerOptions(): Promise<LoggerConfig> {
       { stream: stdoutDestination(), level },
       { stream: fileStream, level },
     ]);
-  } else if (destinations.has("file")) {
+  } else if (destinations.has(LogDestination.File)) {
     options.transport = {
       target: "pino-roll",
       options: fileRotationOptions(),

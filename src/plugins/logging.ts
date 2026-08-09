@@ -1,11 +1,7 @@
 import fp from "fastify-plugin";
 import { envEnum } from "@/config/env";
 import { flushLogDestinations } from "@/config/logger";
-
-/**
- * The per-request logging styles `LOG_REQUEST_STYLE` selects from.
- */
-export const REQUEST_LOG_STYLES = ["fastify", "single", "off"] as const;
+import { LogRequestStyle } from "@/enums";
 
 /**
  * Logging plugin. The pino instance itself must be created with the
@@ -33,8 +29,12 @@ export default fp(
       flushLogDestinations();
     });
 
-    const style = envEnum("LOG_REQUEST_STYLE", REQUEST_LOG_STYLES, "fastify");
-    if (style === "single") {
+    const style = envEnum(
+      "LOG_REQUEST_STYLE",
+      Object.values(LogRequestStyle),
+      LogRequestStyle.Fastify,
+    );
+    if (style === LogRequestStyle.Single) {
       fastify.addHook("onResponse", async (req, reply) => {
         req.log.info(
           {

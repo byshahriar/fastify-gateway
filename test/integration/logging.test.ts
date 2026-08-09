@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import Fastify, { LogController, type FastifyInstance } from "fastify";
 import loggingPlugin from "@/plugins/logging";
+import { LogRequestStyle } from "@/enums";
 import type { GatewayConfig } from "@/types";
 import { buildTestApp } from "@test/helpers/app";
 
@@ -26,7 +27,7 @@ afterEach(() => {
  * Builds a bare Fastify app with the logging plugin and a capture stream, so
  * tests can assert the exact lines the plugin emits.
  */
-async function buildCapturingApp(config: Partial<GatewayConfig>, style?: string) {
+async function buildCapturingApp(config: Partial<GatewayConfig>, style?: LogRequestStyle) {
   if (style !== undefined) process.env.LOG_REQUEST_STYLE = style;
 
   const lines: Array<Record<string, unknown>> = [];
@@ -56,7 +57,7 @@ async function buildCapturingApp(config: Partial<GatewayConfig>, style?: string)
 
 describe("logging plugin", () => {
   it("emits one structured completion line per request in single style", async () => {
-    const { app, lines } = await buildCapturingApp({}, "single");
+    const { app, lines } = await buildCapturingApp({}, LogRequestStyle.Single);
 
     await app.inject({ method: "GET", url: "/instant?x=1" });
     await app.close();
@@ -73,7 +74,7 @@ describe("logging plugin", () => {
   });
 
   it("logs nothing per request in off style", async () => {
-    const { app, lines } = await buildCapturingApp({}, "off");
+    const { app, lines } = await buildCapturingApp({}, LogRequestStyle.Off);
 
     await app.inject({ method: "GET", url: "/instant" });
     await app.close();
@@ -100,7 +101,7 @@ describe("logging plugin", () => {
   });
 
   it("builds and serves with single style end to end", async () => {
-    const app = await buildTestApp({ LOG_REQUEST_STYLE: "single" });
+    const app = await buildTestApp({ LOG_REQUEST_STYLE: LogRequestStyle.Single });
     const res = await app.inject({ method: "GET", url: "/healthz" });
     expect(res.statusCode).toBe(200);
     await app.close();

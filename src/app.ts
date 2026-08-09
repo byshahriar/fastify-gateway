@@ -5,9 +5,10 @@ import { configSchema } from "@/config/schema";
 import { envBoolean, envEnum, envNumber } from "@/config/env";
 import { buildLoggerOptions } from "@/config/logger";
 import { Header, SAFE_HEADER_ID_PATTERN } from "@/constants";
+import { LogRequestStyle } from "@/enums";
 import securityPlugin from "@/plugins/security";
 import requestContextPlugin from "@/plugins/request-context";
-import loggingPlugin, { REQUEST_LOG_STYLES } from "@/plugins/logging";
+import loggingPlugin from "@/plugins/logging";
 import ipFilterPlugin from "@/plugins/ip-filter";
 import pressurePlugin from "@/plugins/pressure";
 import authPlugin from "@/plugins/auth";
@@ -38,7 +39,11 @@ import publicGateway from "@/services/public.gateway";
  */
 export async function buildApp() {
   const trustProxy = envBoolean("TRUST_PROXY", true);
-  const requestLogStyle = envEnum("LOG_REQUEST_STYLE", REQUEST_LOG_STYLES, "fastify");
+  const requestLogStyle = envEnum(
+    "LOG_REQUEST_STYLE",
+    Object.values(LogRequestStyle),
+    LogRequestStyle.Fastify,
+  );
 
   // These options configure the Fastify factory, so they read from raw env
   // before @fastify/env runs; envNumber/envBoolean fail fast on bad values.
@@ -47,7 +52,7 @@ export async function buildApp() {
     // "single" and "off" replace Fastify's built-in two-line request
     // logging; the logging plugin emits the replacement line for "single".
     logController: new LogController({
-      disableRequestLogging: requestLogStyle !== "fastify",
+      disableRequestLogging: requestLogStyle !== LogRequestStyle.Fastify,
     }),
     bodyLimit: envNumber("BODY_LIMIT", 1_048_576, 1),
     genReqId: (req) => {
