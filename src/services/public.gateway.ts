@@ -2,9 +2,12 @@ import type { GatewayConfig } from "@/types";
 import { ServiceGateway } from "@/core/service-gateway";
 
 /**
- * Public service proxy. No edge authentication. Opts into response caching;
- * entries are cached only when `CACHE_ENABLED` is set and the upstream sends
- * a cacheable `Cache-Control`.
+ * Public service proxy.
+ *
+ * - No edge authentication.
+ * - Opts into response caching; entries are cached only when
+ *   `CACHE_ENABLED` is set and the upstream sends a cacheable
+ *   `Cache-Control`.
  */
 export class PublicGateway extends ServiceGateway {
   readonly name = "public";
