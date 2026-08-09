@@ -1,8 +1,6 @@
 /**
- * HTTP header names used by the gateway. Every value is a standard or
- * widely-adopted de facto header name, except `Cache`, which is the
- * gateway's own invented header signaling a response-cache hit or miss
- * (see `plugins/cache.ts`).
+ * HTTP header names used by the gateway; standard or widely-adopted de
+ * facto names, except where noted inline.
  */
 export const Header = {
   RequestId: "x-request-id",
@@ -13,6 +11,7 @@ export const Header = {
   AcceptEncoding: "accept-encoding",
   ApiKey: "x-api-key",
   Authorization: "authorization",
+  // Gateway-invented; signals a response-cache hit or miss (plugins/cache.ts).
   Cache: "x-cache",
   CacheControl: "cache-control",
   ContentEncoding: "content-encoding",
