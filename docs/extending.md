@@ -117,7 +117,16 @@ registrations throw; unregistered references fail at boot.
 - **Configuration** — every value goes through the schema; never read
   `process.env` outside the factory options in `app.ts`.
 - **Comments** — JSDoc blocks on exported declarations and members; `//` for
-  internal notes; nothing that repeats the code.
+  internal notes; nothing that repeats the code and nothing that narrates
+  the change history (no "added for X", "previously did Y" — that belongs in
+  the PR description and commit message, not the code). A module- or
+  class-level block is a short prose intro (what it is/does), and only when
+  there's more than one distinct behavior or invariant worth calling out, a
+  flat bulleted list of complete, capitalized, period-terminated sentences —
+  never a second prose paragraph, nested bullets, or an ad hoc labeled
+  sub-heading. A function- or method-level block is prose plus
+  `@param`/`@returns`/`@throws`; the tags already provide the structure, so
+  it doesn't need bullets too.
 - **No raw literals** — header names from `@/constants` (`Header`), statuses
   from `HttpStatus`, client messages from `ErrorMessage`, schemes from
   `AuthScheme`.
