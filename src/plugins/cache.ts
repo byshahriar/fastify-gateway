@@ -13,12 +13,12 @@ const LOOKUP_TIMEOUT_MS = 150;
 // Response headers replayed on a hit. `content-encoding` is safe to replay
 // because the client's `accept-encoding` participates in the cache key.
 const STORED_HEADERS = [
-  "content-type",
-  "content-encoding",
-  "content-language",
+  Header.ContentType,
+  Header.ContentEncoding,
+  Header.ContentLanguage,
   Header.CacheControl,
-  "etag",
-  "last-modified",
+  Header.Etag,
+  Header.LastModified,
   Header.Vary,
 ] as const;
 

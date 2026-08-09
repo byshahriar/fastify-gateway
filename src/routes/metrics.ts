@@ -32,7 +32,7 @@ const metrics: FastifyPluginAsync = async (fastify) => {
       }
     }
 
-    reply.header("content-type", fastify.metricsRegistry.contentType);
+    reply.header(Header.ContentType, fastify.metricsRegistry.contentType);
     return fastify.metricsRegistry.metrics();
   });
 };
