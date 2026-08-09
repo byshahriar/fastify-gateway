@@ -29,13 +29,16 @@ its type (`GatewayConfig`) is derived from the schema itself, so adding a
 variable to the schema updates the type everywhere.
 
 A few values are read from the raw environment instead, because they
-configure the Fastify factory or the process before the schema plugin runs:
-`LOG_LEVEL`, `BODY_LIMIT`, `TRUST_PROXY`, `KEEP_ALIVE_TIMEOUT_MS`,
-`REQUEST_TIMEOUT_MS`, and `SHUTDOWN_TIMEOUT_MS`. They are marked as
-factory/process options below. These are validated the same way — a
-non-numeric timeout or a non-boolean `TRUST_PROXY` fails at boot rather than
-silently coercing to a degraded value (for example `NaN` disabling a
-timeout).
+configure the Fastify factory, the logger, or the process before the schema
+plugin runs: `LOG_LEVEL`, `LOG_DESTINATION`, `LOG_FILE`,
+`LOG_ROTATION_FREQUENCY`, `LOG_ROTATION_MAX_SIZE`, `LOG_RETENTION_FILES`,
+`LOG_BUFFER_BYTES`, `LOG_REQUEST_STYLE`, `BODY_LIMIT`, `TRUST_PROXY`,
+`KEEP_ALIVE_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS`, `SHUTDOWN_TIMEOUT_MS`,
+`OTEL_ENABLED`, `OTEL_SERVICE_NAME`, and `OTEL_EXPORTER_OTLP_ENDPOINT`. They
+are marked as factory/process options below. These are validated the same
+way — a non-numeric timeout or a non-boolean `TRUST_PROXY` fails at boot
+rather than silently coercing to a degraded value (for example `NaN`
+disabling a timeout).
 
 ## Reference
 
@@ -53,7 +56,6 @@ timeout).
 | `LOG_RETENTION_FILES` | `14` | Number of recent log files to retain; older ones are deleted automatically (factory option) |
 | `LOG_BUFFER_BYTES` | `0` | Buffered async stdout writes: batch log lines until this many bytes accumulate. `0` writes synchronously. Orderly shutdown flushes the buffer; a hard crash can lose the tail (factory option) |
 | `LOG_REQUEST_STYLE` | `fastify` | Per-request logging: `fastify` (built-in incoming + completed lines), `single` (one structured completion line per request — half the log volume), or `off` (no per-request lines; errors are still logged) (factory option) |
-| `SLOW_REQUEST_MS` | `0` | Log a warn-level line for any request slower than this many milliseconds; `0` disables |
 | `BODY_LIMIT` | `1048576` | Max body size in bytes for gateway-served routes; proxied bodies are streamed, not buffered (factory option) |
 | `TRUST_PROXY` | `true` | Resolve `req.ip` from `x-forwarded-for`. Set `false` when clients connect directly, or rate-limit keys become spoofable (factory option) |
 | `KEEP_ALIVE_TIMEOUT_MS` | `72000` | Server keep-alive timeout; keep it above the load balancer's idle timeout (factory option) |
@@ -92,6 +94,7 @@ allowing traffic — see [Authentication](authentication.md).
 
 | Variable | Default | Description |
 | --- | --- | --- |
+| `SLOW_REQUEST_MS` | `0` | Log a warn-level line for any request slower than this many milliseconds; `0` disables |
 | `METRICS_TOKEN` | — | Bearer token required to scrape `GET /metrics`. Empty leaves the endpoint open — protect it with network policy in that case |
 | `ALERTS_ENABLED` | `false` | Feature flag for chat alerts on 5xx responses |
 | `ALERT_CHANNEL` | `none` | Active alert channel: `none`, `slack`, or `discord` |
@@ -131,6 +134,12 @@ While any configured threshold is exceeded, requests are answered
 | `PRESSURE_SAMPLE_INTERVAL_MS` | `1000` | Sampling interval for the checks above |
 | `PRESSURE_RETRY_AFTER_SECONDS` | `10` | `Retry-After` value on shed responses |
 
+### Redis
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `REDIS_URL` | — | Connection string for the store shared by rate limiting and response caching; empty leaves rate limiting on its in-memory store (correct for a single instance) and makes `CACHE_ENABLED=true` fail at boot |
+
 ### Response caching
 
 Shared, `Cache-Control`-aware caching for services that opt in via
@@ -153,7 +162,6 @@ cached; TTL follows the upstream's `s-maxage`/`max-age`. Hits carry
 | `RATE_LIMIT_MAX` | `100` | Requests allowed per window per client IP |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Window length in milliseconds |
 | `RATE_LIMIT_BAN` | `0` | Ban a client IP after this many consecutive over-limit responses; `0` disables |
-| `REDIS_URL` | — | Redis connection string for a shared rate-limit store across replicas; empty uses the in-memory store |
 
 ### Upstream connections
 
