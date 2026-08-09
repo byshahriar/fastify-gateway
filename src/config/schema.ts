@@ -1,3 +1,5 @@
+import { AlertChannelKind, AlertLevel } from "@/enums";
+
 /**
  * Environment schema, validated and type-coerced by `@fastify/env` at boot
  * and exposed as the typed `fastify.config`. The process refuses to start on
@@ -5,22 +7,30 @@
  * `types/gateway-config.type.ts` is derived from this schema, so adding a
  * property here updates the type everywhere.
  *
- * `LOG_LEVEL` and `BODY_LIMIT` are read from raw env in `app.ts` because they
- * configure the Fastify factory itself, before this plugin runs.
+ * Properties are grouped into named sections matching the reference tables
+ * in `docs/configuration.md`; keep the two in sync when adding a property.
+ *
+ * `LOG_LEVEL`, `LOG_DESTINATION`, `LOG_REQUEST_STYLE`, `LOG_BUFFER_BYTES`,
+ * and the other raw-env factory/process options listed in
+ * `docs/configuration.md` are read directly from the environment in `app.ts`
+ * and `server.ts`, before this schema is validated, so they do not appear
+ * here.
  */
 export const configSchema = {
   type: "object",
   properties: {
-    // Listen address and port.
+    // SERVER
     PORT: { type: "number", default: 8080 },
     HOST: { type: "string", default: "0.0.0.0" },
 
+    // CORS
     // Comma-separated origin allow-list; `"*"` allows any origin.
     CORS_ORIGINS: { type: "string", default: "*" },
     // Sends Access-Control-Allow-Credentials; rejected at boot when combined
     // with a wildcard CORS_ORIGINS (see plugins/security.ts).
     CORS_ALLOW_CREDENTIALS: { type: "boolean", default: false },
 
+    // EDGE AUTHENTICATION
     // Shared secret for services using the `api-key` auth scheme.
     GATEWAY_API_KEY: { type: "string", default: "" },
 
@@ -44,50 +54,10 @@ export const configSchema = {
     BEARER_INTROSPECTION_TOKEN: { type: "string", default: "" },
     BEARER_CACHE_TTL_MS: { type: "number", default: 0 },
 
+    // OBSERVABILITY
     // Log a warn-level line for any request slower than this many
     // milliseconds. 0 disables. See plugins/logging.ts.
     SLOW_REQUEST_MS: { type: "number", default: 0 },
-
-    // IP filtering, evaluated against the real client IP (see TRUST_PROXY).
-    // Comma-separated IPs or CIDR ranges, IPv4 and IPv6. A non-empty allow
-    // list blocks every client it does not match; the deny list blocks its
-    // matches outright and wins over the allow list. Empty disables a list.
-    IP_ALLOW_LIST: { type: "string", default: "" },
-    IP_DENY_LIST: { type: "string", default: "" },
-
-    // Load shedding. Requests arriving while the event loop or memory is over
-    // these thresholds are answered 503 + Retry-After instead of queueing
-    // behind work the instance cannot absorb. A value of 0 disables that
-    // individual check. Health probes and /metrics are exempt.
-    PRESSURE_MAX_EVENT_LOOP_DELAY_MS: { type: "number", default: 1000 },
-    PRESSURE_MAX_EVENT_LOOP_UTILIZATION: { type: "number", default: 0.98 },
-    PRESSURE_MAX_HEAP_USED_BYTES: { type: "number", default: 0 },
-    PRESSURE_MAX_RSS_BYTES: { type: "number", default: 0 },
-    PRESSURE_SAMPLE_INTERVAL_MS: { type: "number", default: 1000 },
-    PRESSURE_RETRY_AFTER_SECONDS: { type: "number", default: 10 },
-
-    // Response caching (feature flag) for services that opt in via
-    // `cacheable`. Requires REDIS_URL so entries are shared across replicas.
-    // TTL comes from the upstream's Cache-Control (s-maxage/max-age), capped
-    // by CACHE_MAX_TTL_MS; CACHE_DEFAULT_TTL_MS applies when the upstream
-    // sends no Cache-Control (0 = cache only when the upstream opts in).
-    // Bodies over CACHE_MAX_BODY_BYTES are never cached.
-    CACHE_ENABLED: { type: "boolean", default: false },
-    CACHE_MAX_TTL_MS: { type: "number", default: 60000 },
-    CACHE_DEFAULT_TTL_MS: { type: "number", default: 0 },
-    CACHE_MAX_BODY_BYTES: { type: "number", default: 1048576 },
-
-    // Requests allowed per client IP within the window.
-    RATE_LIMIT_MAX: { type: "number", default: 100 },
-    RATE_LIMIT_WINDOW_MS: { type: "number", default: 60000 },
-
-    // Number of consecutive over-limit requests after which a client IP is
-    // temporarily banned (escalating brute-force friction). 0 disables.
-    RATE_LIMIT_BAN: { type: "number", default: 0 },
-
-    // Redis connection string for a shared rate-limit store across replicas.
-    // Empty uses the in-memory store (correct for a single instance).
-    REDIS_URL: { type: "string", default: "" },
 
     // Bearer token required to scrape GET /metrics. Empty leaves the endpoint
     // open — protect it with network policy in that case.
@@ -97,9 +67,17 @@ export const configSchema = {
     // triggers a throttled notification to the single active channel selected
     // by ALERT_CHANNEL, using that channel's webhook URL.
     ALERTS_ENABLED: { type: "boolean", default: false },
-    ALERT_CHANNEL: { type: "string", enum: ["none", "slack", "discord"], default: "none" },
+    ALERT_CHANNEL: {
+      type: "string",
+      enum: Object.values(AlertChannelKind),
+      default: AlertChannelKind.None,
+    },
     // Lowest response class to alert on: "error" (5xx) or "warn" (4xx + 5xx).
-    ALERT_LEVEL: { type: "string", enum: ["error", "warn"], default: "error" },
+    ALERT_LEVEL: {
+      type: "string",
+      enum: Object.values(AlertLevel),
+      default: AlertLevel.Error,
+    },
     // Webhook URL for the corresponding ALERT_CHANNEL selection.
     SLACK_WEBHOOK_URL: { type: "string", default: "" },
     DISCORD_WEBHOOK_URL: { type: "string", default: "" },
@@ -109,12 +87,61 @@ export const configSchema = {
     // exponential backoff. 0 disables retrying.
     ALERT_RETRIES: { type: "number", default: 2 },
 
+    // IP FILTERING
+    // Evaluated against the real client IP (see TRUST_PROXY). Comma-separated
+    // IPs or CIDR ranges, IPv4 and IPv6. A non-empty allow list blocks every
+    // client it does not match; the deny list blocks its matches outright and
+    // wins over the allow list. Empty disables a list.
+    IP_ALLOW_LIST: { type: "string", default: "" },
+    IP_DENY_LIST: { type: "string", default: "" },
+
+    // LOAD SHEDDING
+    // Requests arriving while the event loop or memory is over these
+    // thresholds are answered 503 + Retry-After instead of queueing behind
+    // work the instance cannot absorb. A value of 0 disables that individual
+    // check. Health probes and /metrics are exempt.
+    PRESSURE_MAX_EVENT_LOOP_DELAY_MS: { type: "number", default: 1000 },
+    PRESSURE_MAX_EVENT_LOOP_UTILIZATION: { type: "number", default: 0.98 },
+    PRESSURE_MAX_HEAP_USED_BYTES: { type: "number", default: 0 },
+    PRESSURE_MAX_RSS_BYTES: { type: "number", default: 0 },
+    PRESSURE_SAMPLE_INTERVAL_MS: { type: "number", default: 1000 },
+    PRESSURE_RETRY_AFTER_SECONDS: { type: "number", default: 10 },
+
+    // REDIS
+    // Shared store backing the rate limiter and the response cache. Empty
+    // leaves rate limiting on its in-memory store (correct for a single
+    // instance) and forces CACHE_ENABLED to fail at boot.
+    REDIS_URL: { type: "string", default: "" },
+
+    // RESPONSE CACHING
+    // Feature flag for services that opt in via `cacheable`. Requires
+    // REDIS_URL so entries are shared across replicas. TTL comes from the
+    // upstream's Cache-Control (s-maxage/max-age), capped by
+    // CACHE_MAX_TTL_MS; CACHE_DEFAULT_TTL_MS applies when the upstream sends
+    // no Cache-Control (0 = cache only when the upstream opts in). Bodies
+    // over CACHE_MAX_BODY_BYTES are never cached.
+    CACHE_ENABLED: { type: "boolean", default: false },
+    CACHE_MAX_TTL_MS: { type: "number", default: 60000 },
+    CACHE_DEFAULT_TTL_MS: { type: "number", default: 0 },
+    CACHE_MAX_BODY_BYTES: { type: "number", default: 1048576 },
+
+    // RATE LIMITING
+    // Requests allowed per client IP within the window.
+    RATE_LIMIT_MAX: { type: "number", default: 100 },
+    RATE_LIMIT_WINDOW_MS: { type: "number", default: 60000 },
+
+    // Number of consecutive over-limit requests after which a client IP is
+    // temporarily banned (escalating brute-force friction). 0 disables.
+    RATE_LIMIT_BAN: { type: "number", default: 0 },
+
+    // UPSTREAM CONNECTIONS
     // Per-service undici connection pool: response timeout, TCP connect
     // timeout, and pool size.
     UPSTREAM_TIMEOUT_MS: { type: "number", default: 10000 },
     UPSTREAM_CONNECT_TIMEOUT_MS: { type: "number", default: 2000 },
     UPSTREAM_MAX_CONNECTIONS: { type: "number", default: 128 },
 
+    // SERVICES
     // One base URL per service, plus optional `username:password` credentials
     // the gateway uses to authenticate against that upstream.
     USERS_SERVICE_URL: {
