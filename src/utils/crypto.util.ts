@@ -1,7 +1,11 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 
 function digest(value: string): Buffer {
-  return createHash("sha256").update(value).digest();
+  // Not a password-storage hash; this only normalizes two known secrets to
+  // a fixed-length buffer so timingSafeEqual can compare them without a
+  // length-based timing leak. A slow KDF here would make every request pay
+  // its cost for nothing.
+  return createHash("sha256").update(value).digest(); // codeql[js/insufficient-password-hash]
 }
 
 /**
