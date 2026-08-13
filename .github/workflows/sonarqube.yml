@@ -28,7 +28,7 @@ jobs:
       # Produces coverage/lcov.info consumed via sonar-project.properties.
       - run: npm run test:cov
       - name: SonarQube scan
-        uses: SonarSource/sonarqube-scan-action@v4
+        uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # For a self-hosted SonarQube server, also set SONAR_HOST_URL.
