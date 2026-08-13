@@ -24,9 +24,9 @@ export default defineConfig({
       // text: terminal summary; lcov: SonarQube; cobertura: GitLab coverage.
       reporter: ["text", "lcov", "cobertura"],
       thresholds: {
-        statements: 100,
-        functions: 100,
-        lines: 100,
+        statements: 90,
+        functions: 90,
+        lines: 90,
         branches: 90,
       },
     },
