@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/assets/cover.png" alt="fastify-gateway — fast, secure API gateway built with Fastify" width="100%">
+</p>
+
 # fastify-gateway
 
 [![CI](https://github.com/byshahriar/fastify-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/byshahriar/fastify-gateway/actions/workflows/ci.yml)
