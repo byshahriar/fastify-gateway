@@ -64,7 +64,99 @@ curl -u admin:change-me        localhost:8080/api/orders/list  # Basic auth serv
 curl localhost:8080/api/public/status                          # public service
 ```
 
-See [Getting Started](docs/getting-started.md) for the full walkthrough.
+Or with Docker:
+
+```bash
+docker build -t fastify-gateway .
+docker run --rm -p 8080:8080 --env-file .env fastify-gateway
+```
+
+`compose.yaml` also spins up three demo upstreams behind the gateway if you
+want a working topology without wiring up real services:
+`docker compose up --build`. See [Deployment](docs/deployment.md) for
+Kubernetes and production notes, and [Getting Started](docs/getting-started.md)
+for the full walkthrough.
+
+## Architecture
+
+Plugins register in a fixed order (`src/app.ts`); five of them **gate** the
+request and can short-circuit the pipeline before it reaches a proxy:
+
+```mermaid
+flowchart TB
+    client([Client])
+    upstream[(Upstream service)]
+
+    subgraph gateway["fastify-gateway — request pipeline"]
+        security["security<br/>Helmet + CORS"]
+        context["request-context<br/>ids + traceparent"]
+        ipfilter{"ip-filter<br/>allow/deny list"}
+        pressure{"pressure<br/>event-loop / memory"}
+        auth{"auth<br/>edge strategy per service"}
+        ratelimit{"rate-limit<br/>per-IP budget"}
+        cache{"cache<br/>GET on a cacheable service?"}
+        proxy["proxy<br/>header rewrite, credential handling"]
+        errors["error-handler<br/>uniform error shape"]
+    end
+
+    client --> security --> context --> ipfilter
+    ipfilter -->|blocked| errors
+    ipfilter -->|allowed| pressure
+    pressure -->|shed| errors
+    pressure -->|ok| auth
+    auth -->|rejected| errors
+    auth -->|authorized| ratelimit
+    ratelimit -->|over budget| errors
+    ratelimit -->|ok| cache
+    cache -->|hit| client
+    cache -->|miss or not cacheable| proxy
+    proxy ==>|"streamed via pooled undici"| upstream
+    proxy -.->|"timeout / connection failure"| errors
+    errors --> client
+```
+
+`logging`, `redis`, `metrics`, and `alerts` observe every request without
+gating it, and are omitted above for clarity. The full diagram set —
+including the response-caching sequence and module-dependency graph — lives
+in [Architecture](docs/architecture.md).
+
+```
+src/
+├── app.ts          composition root — registration order lives here
+├── config/         env schema (@fastify/env) + pre-schema factory options
+├── core/
+│   └── service-gateway.ts    abstract ServiceGateway + toPlugin() bridge
+├── strategies/     edge auth strategies — api-key, basic, jwt, bearer
+├── plugins/        cross-cutting concerns: security, auth, rate-limit,
+│                   cache, ip-filter, pressure, metrics, alerts, …
+├── routes/         what the gateway answers itself (health, /metrics)
+└── gateways/       what the gateway forwards — one small class per upstream
+```
+
+Adding a new upstream is three small, additive steps with no existing files
+touched — see [Extending](docs/extending.md).
+
+## Configuration
+
+Everything is environment-driven and schema-validated at boot — an invalid
+or missing required value fails startup immediately, never at request time.
+A representative slice (~70 variables total, all defaulted except
+credentials):
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `PORT` | `8080` | Listen port |
+| `GATEWAY_API_KEY` | — | Shared secret for services using the `api-key` scheme |
+| `BASIC_AUTH_USERS` | — | Comma-separated `username:password` pairs for the `basic` scheme |
+| `TRUST_PROXY` | `true` | Resolve `req.ip` from `x-forwarded-for`; set `false` behind a direct client connection |
+| `REDIS_URL` | — | Shared store backing rate limiting and response caching across replicas |
+| `CACHE_ENABLED` | `false` | Feature flag for `Cache-Control`-aware response caching (requires `REDIS_URL`) |
+| `IP_ALLOW_LIST` / `IP_DENY_LIST` | — | CIDR-aware allow/deny lists evaluated against the real client IP |
+| `OTEL_ENABLED` | `false` | Feature flag for OpenTelemetry span export |
+| `ALERTS_ENABLED` | `false` | Feature flag for Slack/Discord alerting on 5xx responses |
+
+Full reference, including auth, observability, load-shedding, and rate-limit
+variables: [Configuration](docs/configuration.md).
 
 ## Documentation
 
