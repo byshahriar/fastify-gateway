@@ -46,6 +46,11 @@ Run from the repo root:
 the change works over real HTTP against the compiled artifact, not just
 against the type checker.
 
+A `Makefile` and `scripts/tasks.sh` wrap these same commands (`make check`
+runs the full local gate; `make help` or `./scripts/tasks.sh` with no
+argument lists every target) — equivalent to the table above, not a
+different set of behavior.
+
 ## Conventions
 
 The canonical, detailed version of these lives in
@@ -91,11 +96,51 @@ Summary:
   a gap.
 - **Tests accompany behavior** — see [docs/testing.md](docs/testing.md).
 
+## Patterns
+
+Adding a proxied upstream is the most common extension task. It's three
+small, additive steps — no existing file changes:
+
+```ts
+// 1. src/config/schema.ts — declare the upstream; GatewayConfig picks it up automatically
+BILLING_SERVICE_URL: { type: "string", default: "http://localhost:3004" },
+
+// 2. src/gateways/billing.gateway.ts — one small class per upstream
+import { ServiceGateway } from "@/core/service-gateway";
+import { AuthScheme } from "@/enums";
+import type { GatewayConfig } from "@/types";
+
+export class BillingGateway extends ServiceGateway {
+  readonly name = "billing";
+  readonly prefix = "/api/billing";
+  protected readonly auth = AuthScheme.ApiKey;
+
+  protected upstream(config: GatewayConfig) {
+    return config.BILLING_SERVICE_URL;
+  }
+}
+
+export default new BillingGateway().toPlugin();
+
+// 3. src/app.ts — register it (see Boundaries: registration order matters)
+await app.register(billingGateway);
+```
+
+Full override points (custom timeouts, upstream credentials, caching,
+header policy) are in [docs/extending.md → Override
+points](docs/extending.md#override-points). Adding an edge auth scheme
+follows the same additive shape — see
+[docs/authentication.md#custom-schemes](docs/authentication.md#custom-schemes).
+
 ## Boundaries
 
 - Never commit `.env` or secrets; `.env.example` is the template.
 - Never bypass the auth strategy registry (`fastify.registerAuthStrategy`)
   to add a scheme — see [docs/extending.md](docs/extending.md).
+- Plugin registration order in `src/app.ts` is load-bearing (each plugin can
+  depend on decorators/hooks the previous ones added) — don't reorder it
+  without reading [docs/architecture.md → Request
+  lifecycle](docs/architecture.md#request-lifecycle) first.
 - Never skip pre-commit hooks (`--no-verify`) or bypass signing.
 - Prefer many small, single-purpose commits over one large one; never use
   `git commit --amend` or force-push unless explicitly asked to. Do not add
