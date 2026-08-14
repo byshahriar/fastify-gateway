@@ -29,6 +29,8 @@ Guides for using, operating, and extending fastify-gateway. Start with the
 - [Extending](extending.md) — adding services, override points, new auth schemes
 - [Testing](testing.md) — test layers, running, writing tests
 - [Contributing](../CONTRIBUTING.md) — development workflow
+- [AGENTS.md](../AGENTS.md) — tech stack, commands, and conventions for AI
+  coding agents working in this repo
 
 ## Reference
 

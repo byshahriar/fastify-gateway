@@ -1,7 +1,10 @@
 # Contributing
 
 Thank you for considering a contribution. This document covers the workflow;
-project internals are documented in [docs/](docs/architecture.md).
+project internals are documented in [docs/](docs/architecture.md). If you're
+contributing with an AI coding agent, point it at
+[AGENTS.md](AGENTS.md) first — it covers the same conventions in a
+machine-oriented format.
 
 ## Development setup
 

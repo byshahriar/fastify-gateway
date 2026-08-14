@@ -91,7 +91,9 @@ What is shipped, what the platform owns, and what may come next:
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the
 development workflow and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community
 standards. Security issues should follow [SECURITY.md](SECURITY.md), not the
-public issue tracker.
+public issue tracker. Working with an AI coding agent? See
+[AGENTS.md](AGENTS.md) for the tech stack, commands, and conventions it
+should follow.
 
 ## License
 
