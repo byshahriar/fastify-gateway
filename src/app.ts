@@ -49,8 +49,8 @@ export async function buildApp() {
   // before @fastify/env runs; envNumber/envBoolean fail fast on bad values.
   const app = Fastify({
     logger: await buildLoggerOptions(),
-    // "single" and "off" replace Fastify's built-in two-line request
-    // logging; the logging plugin emits the replacement line for "single".
+    // `single` and `off` replace Fastify's built-in two-line request
+    // logging; the logging plugin emits the replacement line for `single`.
     logController: new LogController({
       disableRequestLogging: requestLogStyle !== LogRequestStyle.Fastify,
     }),
