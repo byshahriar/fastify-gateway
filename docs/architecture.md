@@ -49,7 +49,7 @@ answered by the gateway itself and skip most of this pipeline: health probes
 are exempt from `ip-filter`, `pressure`, and `rate-limit` so an outage can
 never fail liveness into a restart loop; `/metrics` is exempt from
 `pressure` and `rate-limit` but deliberately **not** `ip-filter`, since a
-blocked scrape is visible and recoverable. Requests to `services/` prefixes
+blocked scrape is visible and recoverable. Requests to `gateways/` prefixes
 run the full pipeline and are streamed to the owning upstream. Errors
 anywhere in the pipeline produce the uniform error shape described in
 [Operations](operations.md).
@@ -134,11 +134,11 @@ src/
 ├── routes/                    endpoints the gateway serves itself
 │   ├── health.ts              /healthz, /readyz
 │   └── metrics.ts             /metrics
-└── services/                  endpoints the gateway proxies — one class each
+└── gateways/                  endpoints the gateway proxies — one class each
 ```
 
-The organizing idea is the `routes/` vs `services/` split: **`routes/` is what
-the gateway answers; `services/` is what it forwards.**
+The organizing idea is the `routes/` vs `gateways/` split: **`routes/` is what
+the gateway answers; `gateways/` is what it forwards.**
 
 `constants/`, `enums/`, `interfaces/`, `types/`, `utils/`, and `strategies/`
 each expose a barrel (`index.ts`); consumers import from the folder
@@ -156,10 +156,10 @@ flowchart TD
 
     app --> plugins["plugins/"]
     app --> routes["routes/"]
-    app --> services["services/"]
+    app --> gateways["gateways/"]
     app --> config["config/"]
 
-    services --> core["core/ServiceGateway"]
+    gateways --> core["core/ServiceGateway"]
     plugins --> strategies["strategies/"]
     plugins --> config
 
@@ -185,9 +185,9 @@ gateway reads top to bottom in one file. Registration order is load-bearing:
 2. Plugins — cross-cutting concerns, wrapped in `fastify-plugin` so they apply
    app-wide
 3. Routes — the gateway's own endpoints
-4. Services — one encapsulated proxy per upstream
+4. Gateways — one encapsulated proxy per upstream
 
-Fastify readies each awaited subtree before the next starts, so services can
+Fastify readies each awaited subtree before the next starts, so gateways can
 rely on `fastify.config` and the auth strategy registry already existing.
 
 ## Encapsulation model

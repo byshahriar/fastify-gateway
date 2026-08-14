@@ -13,10 +13,10 @@ existing ones.
 
    The `GatewayConfig` type picks it up automatically.
 
-2. **Create the service class** in `src/services/`:
+2. **Create the gateway class** in `src/gateways/`:
 
    ```ts
-   // src/services/billing.gateway.ts
+   // src/gateways/billing.gateway.ts
    import { ServiceGateway } from "@/core/service-gateway";
    import { AuthScheme } from "@/enums";
    import type { GatewayConfig } from "@/types";

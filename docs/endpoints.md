@@ -1,7 +1,7 @@
 # Endpoints
 
 The gateway exposes two kinds of routes: a few it **serves itself**, and the
-service prefixes it **proxies**. This is the `routes/` vs `services/` split
+service prefixes it **proxies**. This is the `routes/` vs `gateways/` split
 from the [architecture](architecture.md).
 
 ## Served by the gateway
