@@ -7,6 +7,9 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     rules: {
+      // Allow an unused parameter or variable when explicitly marked with a
+      // leading `_` (e.g. overriding a base method without using every
+      // argument, or destructuring to skip a value).
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
