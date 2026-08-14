@@ -2,34 +2,101 @@
 
 ## Request lifecycle
 
+Plugins register in a fixed, load-bearing order (see [Composition
+root](#composition-root)). Most only observe or decorate a request; five
+**gate** it and can short-circuit the pipeline: `ip-filter`, `pressure`,
+`auth`, `rate-limit`, and `cache` (a hit returns immediately, without ever
+reaching the proxy):
+
 ```mermaid
 flowchart TB
     client([Client])
     upstream[(Upstream service)]
 
-    subgraph gateway["fastify-gateway"]
-        security["security — helmet + CORS"]
-        context["request-context — ids + traceparent, logger bindings"]
-        ratelimit["rate-limit — per-IP budget"]
-        health["own routes — /healthz, /readyz"]
-        auth{"edge auth — strategy per service"}
-        proxy["proxy — header rewrite, credential handling"]
-        errors["error-handler — uniform responses"]
+    subgraph gateway["fastify-gateway — request pipeline"]
+        security["security<br/>Helmet + CORS"]
+        context["request-context<br/>ids + traceparent"]
+        ipfilter{"ip-filter<br/>allow/deny list"}
+        pressure{"pressure<br/>event-loop / memory"}
+        auth{"auth<br/>edge strategy per service"}
+        ratelimit{"rate-limit<br/>per-IP budget"}
+        cache{"cache<br/>GET on a cacheable service?"}
+        proxy["proxy<br/>header rewrite, credential handling"]
+        errors["error-handler<br/>uniform error shape"]
     end
 
-    client --> security --> context
-    context -->|"health probes (rate-limit exempt)"| health
-    context --> ratelimit --> auth
-    auth -->|authorized| proxy
+    client --> security --> context --> ipfilter
+    ipfilter -->|blocked| errors
+    ipfilter -->|allowed| pressure
+    pressure -->|shed| errors
+    pressure -->|ok| auth
     auth -->|rejected| errors
+    auth -->|authorized| ratelimit
+    ratelimit -->|over budget| errors
+    ratelimit -->|ok| cache
+    cache -->|hit| client
+    cache -->|miss or not cacheable| proxy
     proxy ==>|"streamed via pooled undici"| upstream
     proxy -.->|"timeout / connection failure"| errors
+    errors --> client
 ```
 
-Requests to `routes/` (health probes) are answered by the gateway itself.
-Requests to `services/` prefixes are authenticated, rewritten, and streamed to
-the owning upstream. Errors anywhere in the pipeline produce the uniform error
-shape described in [Operations](operations.md).
+`logging`, `redis`, `metrics`, and `alerts` observe every request — binding
+log fields, backing the rate limiter and cache, recording histograms, and
+notifying on high-severity responses — without gating it; they are omitted
+above for clarity. Requests to `routes/` (health probes, `/metrics`) are
+answered by the gateway itself and skip most of this pipeline: health probes
+are exempt from `ip-filter`, `pressure`, and `rate-limit` so an outage can
+never fail liveness into a restart loop; `/metrics` is exempt from
+`pressure` and `rate-limit` but deliberately **not** `ip-filter`, since a
+blocked scrape is visible and recoverable. Requests to `services/` prefixes
+run the full pipeline and are streamed to the owning upstream. Errors
+anywhere in the pipeline produce the uniform error shape described in
+[Operations](operations.md).
+
+## Response caching flow
+
+Caching (feature flag `CACHE_ENABLED`) sits between `rate-limit` and `proxy`
+above, and is decided per service (see [Extending → Override
+points](extending.md#override-points), `cacheable`). A miss stores the
+response **after** it has already been sent to the client — the store never
+adds latency to the response path:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway
+    participant Redis
+    participant Upstream
+
+    rect rgb(245, 245, 250)
+    Note over Client,Upstream: Miss — first request for this key
+    Client->>Gateway: GET /api/public/items
+    Gateway->>Redis: GET cache:public:<hash>
+    Redis-->>Gateway: (no entry)
+    Gateway->>Upstream: GET /items
+    Upstream-->>Gateway: 200 OK, Cache-Control: max-age=60
+    Gateway-->>Client: 200 OK, x-cache: MISS
+    Gateway--)Redis: SET cache:public:<hash> (fire-and-forget, after response sent)
+    end
+
+    rect rgb(245, 250, 245)
+    Note over Client,Upstream: Hit — same key, within TTL
+    Client->>Gateway: GET /api/public/items
+    Gateway->>Redis: GET cache:public:<hash>
+    Redis-->>Gateway: cached entry
+    Gateway-->>Client: 200 OK, x-cache: HIT
+    Note right of Gateway: Upstream never touched
+    end
+```
+
+The cache key hashes the URL plus the `accept`/`accept-encoding` request
+headers, scoped per service. Credentialed requests (`Authorization` or
+`Cookie` present) always bypass the cache — a shared cache must never serve
+one client's response to another. Redis errors and slow lookups fail open:
+a cache outage degrades to a plain proxy, never an outage of its own. See
+[Configuration → Response caching](configuration.md#response-caching) for
+the TTL and size rules.
 
 ## Project layout
 
@@ -84,26 +151,30 @@ there are no cycles:
 
 ```mermaid
 flowchart TD
-    app["app.ts"] --> plugins["plugins/"]
+    server["server.ts"] --> app["app.ts"]
+    server --> otel["otel.ts"]
+
+    app --> plugins["plugins/"]
     app --> routes["routes/"]
     app --> services["services/"]
-    app --> config["config/schema.ts"]
+    app --> config["config/"]
 
     services --> core["core/ServiceGateway"]
-    services --> enums["enums/"]
     plugins --> strategies["strategies/"]
-    plugins --> constants["constants/"]
+    plugins --> config
 
-    core --> constants
-    core --> enums
     core --> utils["utils/"]
-    core --> types["types/"]
     strategies --> utils
-    strategies --> types
-
-    types --> config
-    utils --> interfaces["interfaces/"]
+    routes --> utils
 ```
+
+Every layer shown may additionally import from `constants/`, `enums/`,
+`types/`, and `interfaces/` — the foundation layer, each with no
+dependencies of its own except `interfaces/`, which imports `enums/`.
+Omitted above for readability; none of them import back up, so they never
+introduce a cycle. `otel.ts` has no internal dependencies at all — it is
+loaded dynamically, only when `OTEL_ENABLED` is set, and imports only the
+`@opentelemetry/*` packages directly.
 
 ## Composition root
 

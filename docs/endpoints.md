@@ -9,11 +9,15 @@ from the [architecture](architecture.md).
 | Method | Path | Auth | Rate limited | Description |
 | --- | --- | --- | --- | --- |
 | GET | `/healthz` | none | no | Liveness. Always `200 {"status":"ok"}` while the process is up. |
-| GET | `/readyz` | none | no | Readiness. `200 {"status":"ready"}`, or `503 {"status":"draining"}` once shutdown has begun. |
+| GET | `/readyz` | none | no | Readiness. `200 {"status":"ready"}`, `503 {"status":"draining"}` once shutdown has begun, or `503 {"status":"under-pressure"}` while load shedding. |
 | GET | `/metrics` | optional bearer | no | Prometheus metrics. Requires `Authorization: Bearer <METRICS_TOKEN>` when that token is set. |
 
-Health and metrics routes are exempt from rate limiting so probes and scrapes
-never consume a client budget.
+Health and metrics routes are exempt from rate limiting and load shedding so
+probes and scrapes never consume a client budget and an overload can never
+fail liveness into a restart loop. Health probes are additionally exempt
+from IP filtering; `/metrics` deliberately is not — a blocked scrape is
+visible and recoverable. See [Architecture → Request
+lifecycle](architecture.md#request-lifecycle) for the full pipeline.
 
 ### Examples
 

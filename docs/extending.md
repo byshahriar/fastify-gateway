@@ -57,6 +57,7 @@ classDiagram
         +prefix string
         #auth AuthScheme
         #rewritePrefix string
+        #cacheable boolean
         #upstream(config) string
         #upstreamCredentials(config) string
         #connectionOptions(config) UndiciOptions
@@ -74,6 +75,7 @@ classDiagram
     }
     class PublicGateway {
         auth = none
+        cacheable = true
     }
     ServiceGateway <|-- UsersGateway
     ServiceGateway <|-- OrdersGateway
@@ -84,6 +86,7 @@ classDiagram
 | --- | --- | --- |
 | `auth` | `AuthScheme.None` | Require an edge auth scheme |
 | `rewritePrefix` | `"/"` (strips the public prefix) | Mount the upstream path differently |
+| `cacheable` | `false` | Opt into the shared response cache (`CACHE_ENABLED`) for `GET` responses; only valid with `auth = AuthScheme.None` — combining the two throws at boot, since a shared cache in front of an authenticated service would serve one client's response to another. See [Architecture → Response caching flow](architecture.md#response-caching-flow) |
 | `upstreamCredentials(config)` | `undefined` | Present Basic credentials to the upstream |
 | `connectionOptions(config)` | Pool/timeouts from config | Give this service its own pool size or timeouts |
 | `consumesAuthorizationHeader()` | `true` only for Basic | Control whether client `Authorization` reaches the upstream |
