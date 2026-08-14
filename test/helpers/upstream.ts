@@ -5,9 +5,21 @@ import type { AddressInfo } from "node:net";
  * A request captured by a test upstream.
  */
 export interface CapturedRequest {
+  /**
+   * HTTP method the upstream received.
+   */
   method: string;
+  /**
+   * Request path and query string, as received.
+   */
   url: string;
+  /**
+   * Request headers, as received.
+   */
   headers: IncomingHttpHeaders;
+  /**
+   * Raw request body.
+   */
   body: string;
 }
 
@@ -15,8 +27,17 @@ export interface CapturedRequest {
  * Canned response configuration for a test upstream.
  */
 export interface UpstreamOptions {
+  /**
+   * Response status code.
+   */
   status?: number;
+  /**
+   * Response body; strings are sent as-is, everything else is JSON-encoded.
+   */
   body?: unknown;
+  /**
+   * Extra response headers, merged over the default `content-type`.
+   */
   headers?: Record<string, string>;
   /**
    * Delay before responding, to exercise gateway timeouts.
@@ -28,8 +49,17 @@ export interface UpstreamOptions {
  * Handle to a running test upstream.
  */
 export interface TestUpstream {
+  /**
+   * Base URL of the running upstream.
+   */
   url: string;
+  /**
+   * Every request received so far, in arrival order.
+   */
   requests: CapturedRequest[];
+  /**
+   * Stops the upstream and releases its port.
+   */
   close(): Promise<void>;
 }
 
@@ -97,13 +127,25 @@ export async function deadUpstreamUrl(): Promise<string> {
  * Running upstreams for the three demo services.
  */
 export interface ServiceUpstreams {
+  /**
+   * The users-service upstream.
+   */
   users: TestUpstream;
+  /**
+   * The orders-service upstream.
+   */
   orders: TestUpstream;
+  /**
+   * The public-service upstream.
+   */
   publicSvc: TestUpstream;
   /**
    * Env overrides pointing the gateway at these upstreams.
    */
   env: Record<string, string>;
+  /**
+   * Stops all three upstreams.
+   */
   closeAll(): Promise<void>;
 }
 

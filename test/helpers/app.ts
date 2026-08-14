@@ -2,8 +2,11 @@ import type { FastifyInstance } from "fastify";
 import { buildApp } from "@/app";
 
 const BASE_ENV: Record<string, string> = {
+  // Default credentials so api-key/Basic-protected services boot without
+  // real secrets.
   GATEWAY_API_KEY: "test-api-key",
   BASIC_AUTH_USERS: "admin:admin-secret",
+  // Keeps test output quiet; individual tests override to assert on logs.
   LOG_LEVEL: "silent",
   // Disable event-loop shedding by default: a busy CI worker could trip the
   // production thresholds mid-suite. Pressure tests opt back in explicitly.
