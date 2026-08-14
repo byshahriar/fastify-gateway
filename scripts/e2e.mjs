@@ -13,7 +13,7 @@ const GW_DIR = fileURLToPath(new URL("..", import.meta.url));
 const GW = "http://127.0.0.1:18300";
 const PORTS = { users: 18301, orders: 18302, public: 18303 };
 
-// ---------------------------------------------------------------- upstreams
+// --- upstreams -----------------------------------------------------------
 function startEcho(name, port) {
   const server = createServer((req, res) => {
     let body = "";
@@ -30,22 +30,22 @@ function startEcho(name, port) {
   return new Promise((resolve) => server.listen(port, "127.0.0.1", () => resolve(server)));
 }
 
-// ---------------------------------------------------------------- harness
+// --- harness -------------------------------------------------------------
 const results = [];
 let clientNum = 0;
 function record(name, ok, detail = "") {
   results.push({ name, ok, detail });
   console.log(`${ok ? "  PASS" : "✗ FAIL"}  ${name}${ok || !detail ? "" : `  — ${detail}`}`);
 }
-// unique x-forwarded-for per check: trustProxy is on, so each check gets its
-// own rate-limit bucket and doesn't interfere with the rate-limit test
+// Unique x-forwarded-for per check: trustProxy is on, so each check gets its
+// own rate-limit bucket and doesn't interfere with the rate-limit test.
 function req(path, opts = {}) {
   const headers = { "x-forwarded-for": opts.sameClient ?? `10.0.${++clientNum >> 8}.${clientNum & 255}`, ...(opts.headers ?? {}) };
   return fetch(`${GW}${path}`, { ...opts, headers });
 }
 const basic = (u, p) => `Basic ${Buffer.from(`${u}:${p}`).toString("base64")}`;
 
-// ---------------------------------------------------------------- main
+// --- main ----------------------------------------------------------------
 const upstreams = {
   users: await startEcho("users", PORTS.users),
   orders: await startEcho("orders", PORTS.orders),
@@ -71,7 +71,7 @@ const gw = spawn("node", ["dist/server.js"], {
 gw.stdout.on("data", (c) => (gwLog += c));
 gw.stderr.on("data", (c) => (gwLog += c));
 
-// wait for the gateway to listen
+// Wait for the gateway to listen.
 let up = false;
 for (let i = 0; i < 50 && !up; i++) {
   try { up = (await fetch(`${GW}/healthz`)).ok; } catch { await new Promise((r) => setTimeout(r, 100)); }
