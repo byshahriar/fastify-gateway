@@ -6,15 +6,22 @@ import type { AuthStrategy } from "@/types/auth-strategy.type";
 import type { GatewayConfig } from "@/types/gateway-config.type";
 
 /**
- * Type declarations for decorators added at runtime:
+ * Type declarations for decorators and config added at runtime:
  *
- * - `config` — from `@fastify/env`, typed by the schema-derived
- *   {@link GatewayConfig}.
- * - `shuttingDown` — from `app.ts`, flipped by `server.ts` on shutdown.
- * - `trustProxy` — from `app.ts`, whether `x-forwarded-for` is trusted.
- * - `metricsRegistry` — from `plugins/metrics.ts`.
- * - `registerAuthStrategy`, `authStrategy` — from `plugins/auth.ts`.
- * - `correlationId`, `traceId` — from `plugins/request-context.ts`.
+ * - `FastifyInstance.config` — from `@fastify/env`, typed by the
+ *   schema-derived {@link GatewayConfig}.
+ * - `FastifyInstance.shuttingDown` — from `app.ts`, flipped by `server.ts`
+ *   on shutdown.
+ * - `FastifyInstance.trustProxy` — from `app.ts`, whether
+ *   `x-forwarded-for` is trusted.
+ * - `FastifyInstance.metricsRegistry` — from `plugins/metrics.ts`.
+ * - `FastifyInstance.registerAuthStrategy`, `.authStrategy` — from
+ *   `plugins/auth.ts`.
+ * - `FastifyInstance.gatewayCache` — from `plugins/cache.ts`.
+ * - `FastifyContextConfig.shed`, `.ipFilter` — route-level opt-outs read
+ *   by `plugins/pressure.ts` and `plugins/ip-filter.ts`.
+ * - `FastifyRequest.correlationId`, `.traceId`, `.cacheKey` — from
+ *   `plugins/request-context.ts` and `plugins/cache.ts`.
  */
 declare module "fastify" {
   interface FastifyInstance {
