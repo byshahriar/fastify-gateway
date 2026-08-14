@@ -21,7 +21,7 @@ dev: ## Run in watch mode
 start: ## Run once from source
 	npm run start
 
-start-prod: build ## Run the compiled build
+start-prod: build ## Build, then run the compiled build
 	npm run start:prod
 
 build: ## Compile to dist/
