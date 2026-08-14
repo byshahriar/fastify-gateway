@@ -66,8 +66,8 @@ export function createBearerAuthStrategy(options: BearerAuthOptions): AuthStrate
   } = options;
 
   // Request headers are fixed per strategy; build them once, not per request.
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  if (introspectionToken) headers.authorization = `Bearer ${introspectionToken}`;
+  const headers: Record<string, string> = { [Header.ContentType]: "application/json" };
+  if (introspectionToken) headers[Header.Authorization] = `Bearer ${introspectionToken}`;
 
   // Cache of active-token decisions keyed by a hash of the token (never the raw
   // token), holding the epoch-ms at which the decision expires. Only active
