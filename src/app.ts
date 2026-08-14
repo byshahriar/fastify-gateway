@@ -20,9 +20,9 @@ import metricsPlugin from "@/plugins/metrics";
 import alertsPlugin from "@/plugins/alerts";
 import healthRoutes from "@/routes/health";
 import metricsRoutes from "@/routes/metrics";
-import usersGateway from "@/services/users.gateway";
-import ordersGateway from "@/services/orders.gateway";
-import publicGateway from "@/services/public.gateway";
+import usersGateway from "@/gateways/users.gateway";
+import ordersGateway from "@/gateways/orders.gateway";
+import publicGateway from "@/gateways/public.gateway";
 
 /**
  * Builds the gateway application. Registration order is load-bearing:
